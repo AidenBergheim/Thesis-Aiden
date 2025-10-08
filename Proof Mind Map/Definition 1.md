@@ -1,0 +1,1 @@
+For a shape of circumnavigation to be valid, no targets can lie outside of it
