@@ -1,1 +1,1 @@
-$$\varphi_i(t) = \frac{x_i(t) - y(t)}{\|x_i(t) - y(t)\|} =: \frac{x_i(t) - y(t)}{d_i(t)}$$
+$$\varphi_i(t) = \frac{x_i(t) - y(t)}{\|x_i(t) - y(t)\|}$$

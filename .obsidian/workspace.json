@@ -15,9 +15,9 @@
               "state": {
                 "file": "Proof Mind Map/Proof Mind Map.canvas",
                 "viewState": {
-                  "x": 77.6281935050294,
-                  "y": 33.60103562581784,
-                  "zoom": -1.319229286342947
+                  "x": -210.10319487432784,
+                  "y": -239.27767067840554,
+                  "zoom": -0.8974520126626058
                 }
               },
               "icon": "lucide-layout-dashboard",
@@ -173,5 +173,7 @@
     }
   },
   "active": "eba636dda4f96171",
-  "lastOpenFiles": []
+  "lastOpenFiles": [
+    "Proof Mind Map/Proof Mind Map.canvas"
+  ]
 }

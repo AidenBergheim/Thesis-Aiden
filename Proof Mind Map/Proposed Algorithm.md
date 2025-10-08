@@ -13,8 +13,8 @@ $$ \begin{align*} \dot{P}_i(t) &= -P_i(t) + \bar{\varphi}_i(t)\bar{\varphi}_i^\t
 # Control Algorithm
 ---
 
-$$u_\psi(t) = \frac{\exp\!\big(|\tilde{r}(t)|^{\alpha_2}\big)}{\alpha_2 T_{c,2}}
-\, \text{sig}^{1-\alpha_2}\!\big(\tilde{r}(t)\big)$$
+$$u_\psi(t) = \frac{\exp\!\big(|\tilde{d}(t)|^{\alpha_2}\big)}{\alpha_2 T_{c,2}}
+\, \text{sig}^{1-\alpha_2}\!\big(\tilde{d}(t)\big)$$
 $$u(t) =
 \begin{cases}
 k_{\omega}\,\bar{\boldsymbol{\psi}}(t), & t \leq t_s, \\[6pt]

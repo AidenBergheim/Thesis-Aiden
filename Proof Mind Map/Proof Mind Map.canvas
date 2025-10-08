@@ -42,8 +42,8 @@
 		{"id":"8d06baf74dc954dd","type":"file","file":"Proof Mind Map/Background 3.md","x":-380,"y":-1090,"width":380,"height":160},
 		{"id":"e098236afbc6fbe5","type":"file","file":"Proof Mind Map/Proposed Algorithm.md","x":-2080,"y":-1570,"width":720,"height":840,"color":"6"},
 		{"id":"6357f32a1b04a8ae","type":"file","file":"Proof Mind Map/Dynamics.md","x":-1180,"y":-640,"width":740,"height":960},
-		{"id":"1546c682f5265042","type":"file","file":"Proof Mind Map/Background 4.md","x":60,"y":-1530,"width":420,"height":160},
-		{"id":"433497e8946a1b72","type":"file","file":"Proof Mind Map/Background 5.md","x":60,"y":-1310,"width":420,"height":470},
+		{"id":"1546c682f5265042","type":"file","file":"Proof Mind Map/Background 4.md","x":60,"y":-1530,"width":440,"height":160},
+		{"id":"433497e8946a1b72","type":"file","file":"Proof Mind Map/Background 5.md","x":60,"y":-1310,"width":440,"height":470},
 		{"id":"88634f992ad983b4","type":"file","file":"Proof Mind Map/Assumption 1.md","x":620,"y":-1540,"width":720,"height":320},
 		{"id":"74cb4b6375256b71","type":"file","file":"Proof Mind Map/Assumption 2.md","x":620,"y":-1180,"width":720,"height":120},
 		{"id":"a185412134d2fdb9","type":"file","file":"Proof Mind Map/Definition 1.md","x":1480,"y":-1510,"width":720,"height":120},
@@ -51,7 +51,8 @@
 		{"id":"4527e713f3163294","type":"file","file":"Proof Mind Map/Proposition 1.md","x":-1120,"y":440,"width":720,"height":1340},
 		{"id":"8ca0ca07af781e8d","type":"file","file":"Proof Mind Map/Proposition 2.md","x":-360,"y":440,"width":660,"height":1120},
 		{"id":"d48532c34761ae96","type":"file","file":"Pasted image 20251006154907.png","x":2691,"y":-931,"width":79,"height":50},
-		{"id":"1a96730473affe2e","type":"file","file":"Pasted image 20251006154243.png","x":2440,"y":-931,"width":399,"height":183}
+		{"id":"1a96730473affe2e","type":"file","file":"Pasted image 20251006154243.png","x":2440,"y":-931,"width":399,"height":183},
+		{"id":"a36f691881870b95","x":-320,"y":-600,"width":540,"height":880,"type":"file","file":"Proof Mind Map/Lemma 2.md"}
 	],
 	"edges":[
 		{"id":"0fd82b02183893d9","fromNode":"74cb4b6375256b71","fromSide":"right","toNode":"b4da55b9f122da2a","toSide":"left"},
