@@ -8,3 +8,5 @@ Simplifications
 $\psi^\top(t)\bar{\psi}(t)=-\sin(\beta(t))\cos(\beta(t))+\sin(\beta(t))\cos(\beta(t))=0$
 
 $\psi^\top(t)\psi(t)=\cos^2(\beta(t))+\sin^2(\beta(t))=1$
+
+$\boldsymbol{\psi}^\perp(t)=-\bar{\boldsymbol{\psi}}(t)$

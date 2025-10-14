@@ -14,12 +14,10 @@ $$ \begin{align*} \dot{P}_i(t) &= -P_i(t) + \bar{\varphi}_i(t)\bar{\varphi}_i^\t
 ---
 
 $$u_\psi(t) = \frac{\exp\!\big(|\tilde{d}(t)|^{\alpha_2}\big)}{\alpha_2 T_{c,2}}
-\, \text{sig}^{1-\alpha_2}\!\big(\tilde{d}(t)\big)$$
+\, \text{sig}^{1-\alpha_2}\!\big(\tilde{d}(t)\big)-\dot{d}^*(t)$$
 $$u(t) =
 \begin{cases}
-k_{\omega}\,\bar{\boldsymbol{\psi}}(t), & t \leq t_s, \\[6pt]
+k_{\omega}\,\bar{\boldsymbol{\psi}}(t), & t \leq T_{c,1}, \\[6pt]
 u_\psi(t)\boldsymbol{\psi}(t)
-+ k_{\omega}\,\bar{\boldsymbol{\psi}}(t), &    t > t_s,
++ k_{\omega}\,\bar{\boldsymbol{\psi}}(t), &    t > T_{c,1},
 \end{cases}$$
-
-Where $t_s$ is the first time for which $\sum_{i=1}^{n} \left\| \tilde{x}_i(t) \right\|$ is less than some threshold value

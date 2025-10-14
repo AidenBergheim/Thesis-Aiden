@@ -1,9 +1,9 @@
-
+To derive the dynamics of $d(t)$, we can differentiate it wrt. time as follows
 $$\dot{d}(t)=\frac{d}{dt}\sqrt{(\boldsymbol{c}(t)-\boldsymbol{y}(t))^\top(\boldsymbol{c}(t)-\boldsymbol{y}(t))}$$
 
-Applying the chain rule we get
+Applying the chain rule and assuming $d(t)>0$, we get
 
-$$\dot{d}(t)=\frac{(\boldsymbol{c}(t)-\boldsymbol{y}(t))^\top(\boldsymbol{\dot{c}}(t)-\boldsymbol{\dot{y}}(t))}{r(t)}$$
+$$\dot{d}(t)=\frac{(\boldsymbol{c}(t)-\boldsymbol{y}(t))^\top(\boldsymbol{\dot{c}}(t)-\boldsymbol{\dot{y}}(t))}{d(t)}$$
 Applying **Background 2** we have
 $$\dot{d}(t)=\boldsymbol{\psi}^\top(t)(\boldsymbol{\dot{c}}(t)-\boldsymbol{\dot{y}}(t))=\boldsymbol{\psi}^\top(t)(\boldsymbol{\dot{c}}(t)-\boldsymbol{u}(t))$$
 
