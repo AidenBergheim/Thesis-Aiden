@@ -1,10 +1,10 @@
 
 ---
-If $P_i(t_1)$ is positive definite at some time $t_1>0$, then for all $t>t_1$, $P_i(t)$ remains positive definite.
+The minimum eigenvalue of the solution $P_i(t)$ is given by
+
+$$\lambda_{min}(P_i(t)) = \min_{\boldsymbol{\nu_i} \in S^1} \underbrace{\int_{0}^{t} e^{-(t-s)} \cos^2(\gamma_{\boldsymbol{\nu_i}}(s)) \, ds}_{=:h_{\boldsymbol{\nu_i}}(0,t)}$$
+where $S^1 \subset \mathbb{R}^2$  is a set defined as $S:=\{\boldsymbol{\nu_i} \in \mathbb{R}^2:\|\boldsymbol{\nu_i}\|=1\}$ and $\gamma_{\boldsymbol{\nu_i}}(s)$ denotes the angle measured in the counter clockwise direction from a unit vector $\boldsymbol{\nu_i} \in S^1$ to the vector $\bar{\boldsymbol{\varphi}}_i(t)$.
+
 # Proof
 ---
-We have for $t\geq0$ the solution
-$$P_i(t) = e^{-t} P_i(0) + \int_{0}^{t} e^{-(t-s)} \bar{\boldsymbol{\varphi}}_i(s) \bar{\boldsymbol{\varphi}}_i^{\top}(s) \, ds=\int_{0}^{t} e^{-(t-s)} \bar{\boldsymbol{\varphi}}_i(s) \bar{\boldsymbol{\varphi}}_i^{\top}(s) \, ds.$$
-So for $t \geq t_1$ we have 
-$$P_i(t) = \underbrace{e^{-(t-t_1)} P_i(t_1)}_{=:A} + \underbrace{\int_{t_1}^{t} e^{-(t-s)} \bar{\boldsymbol{\varphi}}_i(s) \bar{\boldsymbol{\varphi}}_i^{\top}(s) \, ds}_{=:B}. $$
-Term $A$ is positive definite by assumption and term $B$ is at least positive semi-definite for all $\boldsymbol{\varphi}_i(t) \in \mathbb{R}^2$. Since $P_i(t)$ can be expressed as the sum of the positive definite $A$ and positive semi-definite matrix $B$, $P(t)$ must be positive definite for all subsequent $t \geq t_1$.
+Follows same steps using Rayleigh Quotient as in UnifiedSui2025

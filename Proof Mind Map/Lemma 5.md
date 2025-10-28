@@ -3,7 +3,7 @@
 # Proof
 ---
 ---
-Suppose **Assumption 1** holds, then under the target estimator and controller, the agent to targets centroid distance $d(t)$ is bounded by the interval $d^*(t) \leq d(t)\leq d_{max}(t)$ for  $t> T_{c,1}$. 
+Suppose **Assumption 1** and **Assumption 2** holds, then under the target estimator and controller, the agent to targets centroid distance $d(t)$ is bounded by the interval $$0<d^*(t) \leq d(t)\leq d_{max}(t)<\infty$$ for  $t> T_{c,1}$. 
 # Proof
 ---
 We have using the **Dynamics** that

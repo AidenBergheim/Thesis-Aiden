@@ -3,9 +3,4 @@
 # Proof
 ---
 ---
-Suppose **Assumption 1** holds, then under the target estimator and controller, the agent to targets centroid distance $d(t)$ is $d(t)\equiv d(0)$ for  $t\leq T_{c,1}$. 
-# Proof
----
-From **Assumption 1** we have that $d(0)>d_s>0$. Hence, using the **Dynamics**, we must have for $t=0$ that $\dot{d}(0)=0$ holds. 
-
-Since $\boldsymbol{u}(t)$ is continuous in time, $d(t)$ is continuous in time, and hence $\dot{d}(t)=0$ must continue to hold for the interval $t\leq T_{c,1}$. Thus it must be true that $d(t)\equiv d(0)$ for  $t\leq T_{c,1}$.
+If there exists a continuous radially unbounded function $V: \mathbb{R}^n \mapsto \mathbb{R}_+ \cup \{0\}$ such that $\boldsymbol{x} \in M$ iff $V(\boldsymbol{x}) = 0$ and any solution $\boldsymbol{x}(t)$ of system (2) satisfies$$  \dot{V} = -\frac{1}{pT_c}\exp(V^p)V^{1-p} \tag{3}$$ for constants $T_c = T_c(\boldsymbol{\rho}) > 0$ and $p \in (0, 1]$, then the set ${M}$ is GSPTA for system (2) and the strong predefined time is $T_c$.
