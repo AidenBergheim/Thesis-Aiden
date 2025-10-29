@@ -6,4 +6,3 @@ $$\boldsymbol{\xi}_i(t)=\boldsymbol{\tilde{x}_i}(t)$$
 
 # Proof
 ---
-Follows Proposition 4.2 from PDTSui2025

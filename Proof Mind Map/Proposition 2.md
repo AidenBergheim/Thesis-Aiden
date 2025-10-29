@@ -7,4 +7,9 @@ where $S^1 \subset \mathbb{R}^2$  is a set defined as $S:=\{\boldsymbol{\nu_i} \
 
 # Proof
 ---
-Follows same steps using Rayleigh Quotient as in UnifiedSui2025
+Using the explicit solution from **Proposition 1**, the minimum eigenvalue of $P_i(t)$ can be expressed using the Rayleigh quotient as
+
+$$\begin{align*} \lambda_{\min}(P(t)) &\stackrel{}{=} \min_{\boldsymbol{\nu} \in S^1} \boldsymbol{\nu}^\top P(t) \boldsymbol{\nu} \\ & \stackrel{\underline{(29)}}{=} \min_{\boldsymbol{\nu} \in S^1} \int_0^t e^{-(t-s)} \boldsymbol{\nu}^\top \bar{\boldsymbol{\varphi}}(s) \bar{\boldsymbol{\varphi}}^\top(s) \boldsymbol{\nu} \, ds \\ & \stackrel{}{=} \min_{\boldsymbol{\nu} \in S^1} \int_0^t e^{-(t-s)} \left( \boldsymbol{\nu}^\top \bar{\boldsymbol{\varphi}}(s) \right)^2 \, ds \\ & \stackrel{\|\boldsymbol{\nu}\|, \|\bar{\boldsymbol{\varphi}}\| = 1}{=} \min_{\boldsymbol{\nu} \in S^1} h_{\nu}(0, t). \end{align*}$$
+
+
+

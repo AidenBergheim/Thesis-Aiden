@@ -15,9 +15,9 @@
               "state": {
                 "file": "Proof Mind Map/Proof Mind Map.canvas",
                 "viewState": {
-                  "x": 819.72737559515,
-                  "y": 80.89853656914212,
-                  "zoom": -2.957158524249225
+                  "x": 2259.949814753013,
+                  "y": 528.6159171152389,
+                  "zoom": 0.3396161600133671
                 }
               },
               "icon": "lucide-layout-dashboard",
@@ -109,7 +109,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "a2f583817b864e24",
@@ -202,6 +203,8 @@
   },
   "active": "eba636dda4f96171",
   "lastOpenFiles": [
+    "Pasted image 20251029123321.png",
+    "Pasted image 20251029122944.png",
     "Proof Mind Map/Proof Mind Map.canvas",
     "Proof Mind Map/Theorem 2.md",
     "Proof Mind Map/Theorem 3.md",
