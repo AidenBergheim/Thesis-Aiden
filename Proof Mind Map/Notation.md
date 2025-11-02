@@ -4,7 +4,7 @@ $\boldsymbol{y}(t) \in \mathbb{R}^2$: position of agent
 $\boldsymbol{u}(t) \in \mathbb{R}^2$: control input
 $\boldsymbol{x}_i(t) \in \mathbb{R}^2$: position of target $i$
 $\hat{\boldsymbol{x}}_i(t) \in \mathbb{R}^2$: estimated position of target $i$
-$\tilde{\boldsymbol{x}}_i(t) \in \mathbb{R}^2$: error in estimation of target$i$position $\hat{\boldsymbol{x}}_i(t) - \boldsymbol{x}_i(t)$
+$\tilde{\boldsymbol{x}}_i(t) \in \mathbb{R}^2$: error in estimation of target $i$ position $\hat{\boldsymbol{x}}_i(t) - \boldsymbol{x}_i(t)$
 $\boldsymbol{c}(t) \in \mathbb{R}^2$: position of the centroid of the targets
 $\hat{\boldsymbol{c}}(t) \in \mathbb{R}^2$: estimated position of the centroid of the targets
 $\tilde{\boldsymbol{c}}(t) \in \mathbb{R}^2$: error in estimated position of the centroid of the targets $\hat{\boldsymbol{c}}(t) - \boldsymbol{c}(t)$

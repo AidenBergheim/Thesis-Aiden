@@ -7,9 +7,14 @@ where $S^1 \subset \mathbb{R}^2$  is a set defined as $S:=\{\boldsymbol{\nu_i} \
 
 # Proof
 ---
-Using the explicit solution from **Proposition 1**, the minimum eigenvalue of $P_i(t)$ can be expressed using the Rayleigh quotient as
+Using the solution from **Proposition 1**, the minimum eigenvalue of $P_i(t)$ can be expressed using the Rayleigh quotient as
 
-$$\begin{align*} \lambda_{\min}(P(t)) &\stackrel{}{=} \min_{\boldsymbol{\nu} \in S^1} \boldsymbol{\nu}^\top P(t) \boldsymbol{\nu} \\ & \stackrel{\underline{(29)}}{=} \min_{\boldsymbol{\nu} \in S^1} \int_0^t e^{-(t-s)} \boldsymbol{\nu}^\top \bar{\boldsymbol{\varphi}}(s) \bar{\boldsymbol{\varphi}}^\top(s) \boldsymbol{\nu} \, ds \\ & \stackrel{}{=} \min_{\boldsymbol{\nu} \in S^1} \int_0^t e^{-(t-s)} \left( \boldsymbol{\nu}^\top \bar{\boldsymbol{\varphi}}(s) \right)^2 \, ds \\ & \stackrel{\|\boldsymbol{\nu}\|, \|\bar{\boldsymbol{\varphi}}\| = 1}{=} \min_{\boldsymbol{\nu} \in S^1} h_{\nu}(0, t). \end{align*}$$
+$$\begin{align*}
+\lambda_{\min}(P_i(t)) &= \min_{\boldsymbol{\nu_i} \in S^1} \boldsymbol{\nu_i}^\top P_i(t) \boldsymbol{\nu_i} \\
+&\stackrel{}{=} \min_{\boldsymbol{\nu_i} \in S^1} \int_0^t e^{-(t-s)} \boldsymbol{\nu_i}^\top \bar{\boldsymbol{\varphi}_i}(s) \bar{\boldsymbol{\varphi}_i}^\top(s) \boldsymbol{\nu_i} \, ds \\
+&= \min_{\boldsymbol{\nu_i} \in S^1} \int_0^t e^{-(t-s)} \left( \boldsymbol{\nu_i}^\top \bar{\boldsymbol{\varphi}_i}(s) \right)^2 \, ds \\
+&\stackrel{\|\boldsymbol{\nu_i}\|, \|\bar{\boldsymbol{\varphi}_i}\| = 1}{=} \min_{\boldsymbol{\nu_i} \in S^1} h_{\nu_i}(0, t)
+\end{align*}$$
 
 
 
