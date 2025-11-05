@@ -20,7 +20,7 @@ after taking the derivative wrt. time we have
 $$\dot{\delta}(t)=\dot{d}(t)-\dot{d^*}(t)=\operatorname{sign}(-\delta(t)) \frac{\exp(|\tilde{d}(t)|^{\alpha_2})}{\alpha_2 T_{c,2}} |\delta(t)|^{1-\alpha_2}+\dot{d^*}(t)-\dot{d^*}(t)$$
 $$\dot{\delta}(t)=\operatorname{sign}(-\delta(t)) \frac{\exp(|\tilde{d}(t)|^{\alpha_2})}{\alpha_2 T_{c,2}} |\delta(t)|^{1-\alpha_2}$$
 
-From **Lemma 4** and **Assumption 1** we have that $d(T_{c,1})=d(0)>d^*(T_{c,1})$, and hence $\delta(T_{c,1})>0$. We also have that both $d(t)$ and $d^*(t)$ are continuous, so it follows that in the case that the agent gets closer to the centroid than the desired distance, so $d(t)\leq d^*(t)$, we have that $\dot{\delta}(t)\geq 0$  and hence we must have that
+From **Lemma 4** and **Assumption 2** we have that $d(T_{c,1})=d(0)>d^*(T_{c,1})$, and hence $\delta(T_{c,1})>0$. We also have that both $d(t)$ and $d^*(t)$ are continuous, so it follows that in the case that the agent gets closer to the centroid than the desired distance, so $d(t)\leq d^*(t)$, we have that $\dot{\delta}(t)\geq 0$  and hence we must have that
 $$d(t)\geq d^*(t)>0$$
 for $t>T_{c,1}$.
 

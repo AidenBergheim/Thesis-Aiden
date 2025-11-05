@@ -43,9 +43,9 @@
               "state": {
                 "file": "Proof Mind Map/Proof Mind Map.canvas",
                 "viewState": {
-                  "x": -980.3347984289251,
-                  "y": 1172.3710207955532,
-                  "zoom": -0.2649217113238004
+                  "x": -799.6894686007481,
+                  "y": -1165.88862121402,
+                  "zoom": -0.1993834199679421
                 }
               },
               "icon": "lucide-layout-dashboard",
@@ -204,6 +204,17 @@
   },
   "active": "b7e71547b39c7a48",
   "lastOpenFiles": [
+    "Matlab Simulation/Thesis A/main.m",
+    "Matlab Simulation/Thesis A/Agent.m",
+    "Matlab Simulation/true_hull.m",
+    "Matlab Simulation/Thesis A",
+    "Matlab Simulation/SuivsPDT.m",
+    "Matlab Simulation/sig.m",
+    "Matlab Simulation/PDTAgentBackUp.m",
+    "Matlab Simulation/minEnclosingEllipseStat.m",
+    "Matlab Simulation/minEnclosingCircleProp.m",
+    "Matlab Simulation/MainBackup.m",
+    "Matlab Simulation/main.m",
     "Proof Mind Map/Proposition 3 OLD.md",
     "Proof Mind Map/Theorem 2.md",
     "Proof Mind Map/Theorem 2 OLD.md",
@@ -212,7 +223,7 @@
     "Proof Mind Map/Proposition 3.md",
     "Proof Mind Map/Problem Statements.md",
     "Proof Mind Map/Proposed Algorithm.md",
-    "Proof Mind Map/Lemma 2.md",
+    "Proof Mind Map/Proposition X.md",
     "Pasted image 20251029123321.png",
     "Pasted image 20251029122944.png",
     "Proof Mind Map/Proposition 5.md",

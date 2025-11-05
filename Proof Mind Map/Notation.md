@@ -20,3 +20,5 @@ $\hat{\boldsymbol{r}}(t) \in \mathbb{R}^2$: the estimated position of the agent 
 $\tilde{\boldsymbol{r}}(t) \in \mathbb{R}^2$: the error in estimated position of the agent relative to the targets centroid $\hat{\boldsymbol{r}}(t) - \boldsymbol{r}(t)$
 $\boldsymbol{\psi}(t) \in \mathbb{R}^2$: unit vector from the agent to the centroid of the targets $\boldsymbol{c}(t)$
 $\boldsymbol{\bar{\psi}}(t) \in \mathbb{R}^2$: unit vector perpendicular to $\boldsymbol{\psi}(t)$ obtained by a $\pi/2$ clockwise rotation of $\boldsymbol{\psi}(t)$
+
+$\mathcal{I} = \{1, \dots, n\}$
