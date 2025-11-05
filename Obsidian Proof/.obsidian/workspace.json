@@ -8,52 +8,23 @@
         "type": "tabs",
         "children": [
           {
-            "id": "eba636dda4f96171",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Proof Mind Map/Problem Statements.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Problem Statements"
-            }
-          },
-          {
             "id": "8552aa40cd637385",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Proof Mind Map/Theorem 2.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Theorem 2"
-            }
-          },
-          {
-            "id": "b7e71547b39c7a48",
             "type": "leaf",
             "state": {
               "type": "canvas",
               "state": {
                 "file": "Proof Mind Map/Proof Mind Map.canvas",
                 "viewState": {
-                  "x": -799.6894686007481,
-                  "y": -1165.88862121402,
-                  "zoom": -0.1993834199679421
+                  "x": 860,
+                  "y": 290,
+                  "zoom": -3.24971302733596
                 }
               },
               "icon": "lucide-layout-dashboard",
               "title": "Proof Mind Map"
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "vertical"
@@ -110,8 +81,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "a2f583817b864e24",
@@ -202,50 +172,54 @@
       "bases:Create new base": false
     }
   },
-  "active": "b7e71547b39c7a48",
+  "active": "8552aa40cd637385",
   "lastOpenFiles": [
+    "Proof Mind Map/Proof Mind Map.canvas",
+    "Obsidian/Pasted image 20251029123321.png",
+    "Obsidian/Pasted image 20251029122944.png",
+    "Obsidian/Pasted image 20251014195526.png",
+    "Obsidian/Pasted image 20251013211614.png",
+    "Obsidian/Pasted image 20251013204908.png",
+    "Obsidian/Pasted image 20251013204736.png",
+    "Obsidian/Pasted image 20251013204210.png",
+    "Obsidian/Proof Mind Map/Proposition 1.md",
+    "Obsidian/Proof Mind Map/Theorem 1.md",
+    "Obsidian/Proof Mind Map/Proposition 5.md",
+    "Obsidian/Proof Mind Map/Theorem 2.md",
+    "Obsidian/Proof Mind Map/Theorem 2 OLD.md",
+    "Obsidian/Proof Mind Map/Proposition X.md",
+    "Obsidian/Proof Mind Map/Proposition 1 Old.md",
+    "Obsidian/Proof Mind Map/Proposition 1 Using Option 1.md",
+    "Obsidian/Proof Mind Map/Proposition 4.md",
+    "Obsidian/Proof Mind Map/Proposition 3.md",
+    "Obsidian/Proof Mind Map/Proposition 3 OLD.md",
+    "Obsidian/Proof Mind Map/Proposition 2.md",
+    "Obsidian/Proof Mind Map/Proof Mind Map.md",
+    "Obsidian/Proof Mind Map/Proposed Algorithm.md",
+    "Obsidian/Proof Mind Map/Lemma OLD.md",
+    "Obsidian/Proof Mind Map/Lemma 5.md",
+    "Obsidian/Proof Mind Map/Lemma 5 Old.md",
+    "Obsidian/Proof Mind Map/Proof Mind Map.canvas",
+    "Obsidian/Proof Mind Map/Problem Statements.md",
+    "Obsidian/Proof Mind Map/Options for Controller.md",
+    "Obsidian/Proof Mind Map/Notation.md",
+    "Obsidian/Proof Mind Map/Lemma 6.md",
+    "Obsidian/Proof Mind Map/Lemma 4.md",
+    "Obsidian/Proof Mind Map/Lemma 3.md",
+    "Obsidian/Proof Mind Map/Lemma 1.md",
+    "Obsidian/Proof Mind Map/Dynamics.md",
+    "Obsidian/Proof Mind Map",
+    "Obsidian",
+    "New folder",
+    "Matlab Simulation/CirclevsEllipse.m",
+    "Matlab Simulation/Copy_of_main.m",
     "Matlab Simulation/Thesis A/main.m",
     "Matlab Simulation/Thesis A/Agent.m",
     "Matlab Simulation/true_hull.m",
     "Matlab Simulation/Thesis A",
     "Matlab Simulation/SuivsPDT.m",
-    "Matlab Simulation/sig.m",
-    "Matlab Simulation/PDTAgentBackUp.m",
-    "Matlab Simulation/minEnclosingEllipseStat.m",
-    "Matlab Simulation/minEnclosingCircleProp.m",
-    "Matlab Simulation/MainBackup.m",
-    "Matlab Simulation/main.m",
-    "Proof Mind Map/Proposition 3 OLD.md",
-    "Proof Mind Map/Theorem 2.md",
-    "Proof Mind Map/Theorem 2 OLD.md",
-    "Proof Mind Map/Theorem 1.md",
-    "Proof Mind Map/Proof Mind Map.canvas",
-    "Proof Mind Map/Proposition 3.md",
-    "Proof Mind Map/Problem Statements.md",
-    "Proof Mind Map/Proposed Algorithm.md",
-    "Proof Mind Map/Proposition X.md",
     "Pasted image 20251029123321.png",
     "Pasted image 20251029122944.png",
-    "Proof Mind Map/Proposition 5.md",
-    "Proof Mind Map/Proposition 4.md",
-    "Proof Mind Map/Lemma 6.md",
-    "Proof Mind Map/Proof Mind Map.md",
-    "Proof Mind Map/Lemma 5.md",
-    "Proof Mind Map/Lemma 3.md",
-    "Proof Mind Map/Definition 2.md",
-    "Proof Mind Map/Lemma 5 Old.md",
-    "Proof Mind Map/Definition 1.md",
-    "Proof Mind Map/Lemma 4.md",
-    "Pasted image 20251014195526.png",
-    "Proof Mind Map/Proposition 2.md",
-    "Pasted image 20251013211614.png",
-    "Proof Mind Map/Proposition 1.md",
-    "Proof Mind Map/Proposition 1 Using Option 1.md",
-    "Pasted image 20251013204908.png",
-    "Pasted image 20251013204736.png",
-    "Pasted image 20251013204210.png",
-    "Proof Mind Map/Dynamics with Option 1.md",
-    "Proof Mind Map/Lemma OLD.md",
-    "Proof Mind Map/Lemma 1.md"
+    "Pasted image 20251014195526.png"
   ]
 }

@@ -1,21 +1,5 @@
 function [center, semi_axes, rotation_matrix] = minEnclosingEllipseStat(points)
-% minEnclosingEllipseStat Finds an approximate minimum enclosing ellipse
-% for a set of points using the statistical covariance method.
-%
-% This is an APPROXIMATION and not the true Minimum Volume Enclosing
-% Ellipsoid (MVEE). It calculates the confidence ellipse from the data's
-% covariance and scales it to enclose all points.
-%
-% INPUT:
-%   points: [n x m] matrix, where 'n' is the number of points and
-%           'm' is the dimension (e.g., 2 for 2D points).
-%
-% OUTPUTS:
-%   center: [m x 1] column vector representing the center of the ellipse (the centroid).
-%   semi_axes: [m x 1] column vector of the lengths of the ellipse's semi-axes,
-%              sorted from largest to smallest.
-%   rotation_matrix: [m x m] matrix where each column is an eigenvector
-%                    representing the orientation of the corresponding semi-axis.
+
 
     % --- Handle inputs and edge cases ---
     [n, m] = size(points); % n = num points, m = num dimensions

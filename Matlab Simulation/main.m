@@ -62,9 +62,9 @@ clc
             initial_heading = pi/2;
     
         % Desired Distance to Targets
-        %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 6 + 0.2*sin(30*time) + time;
+        d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 5 + 0.2*sin(30*time)
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeConvexHullRadius(theta, c_hat, x_hat_positions, y);
-        d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinCircleRadius(theta, c_hat, x_hat_positions, y);
+        %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinCircleRadius(theta, c_hat, x_hat_positions, y);
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinEllipseRadius(theta, c_hat, x_hat_positions, y);
         
 
@@ -116,13 +116,13 @@ targetColors = lines(qtyTargets);
                 plot(xT, yT, 'r+', ...
                     'LineWidth', 0.7, ...
                     'MarkerSize', 7, ...
-                    'Color', 'k', ...
+                    'Color', 'r', ...
                     'DisplayName', 'Target positions $\mathbf{x}_i$');
             else
                 plot(xT, yT, 'r+', ...
                     'LineWidth', 0.7, ...
                     'MarkerSize', 7, ...
-                    'Color', 'k', ...
+                    'Color', 'r', ...
                     'HandleVisibility', 'off');
             end
         end
@@ -132,28 +132,42 @@ targetColors = lines(qtyTargets);
     
         % plot trajectory of the single agent
         plot(AgentPDT.p_traj(1,1:mytStepFinal), AgentPDT.p_traj(2,1:mytStepFinal), ...
-            'LineWidth', 1.5, ...
+            'LineWidth', 0.8, ...
             'DisplayName', '$$\mbox{\boldmath$y$}(t)$$ [Controller Inspried by Sui et al. (2025)]',...
-            'Color'      ,  [0.85, 0.15, 0.15]);   
+            'Color'      ,  [0.3, 0.4, 1]);   
         hold on
         centroid = mean(Targets, 2);
-        %desired_traj = zeros(2, mytStepFinal);
-        %for t = 1:mytStepFinal
-        %    theta_t = AgentPDT.theta_traj(t);
-        %    d_des_t = AgentPDT.d_des_traj(t);
-        %    % Position on desired trajectory at angle theta_t and distance d_des_t from centroid
-        %    desired_traj(:, t) = centroid + d_des_t * [cos(theta_t); sin(theta_t)];
-        %end
-        %plot(desired_traj(1,:), desired_traj(2,:), '--', ...
-        %    'LineWidth', 1, ...
-        %    'DisplayName', 'Desired Trajectory',...
-        %    'Color'      ,  [0.55, 0.45, 0.25]);   
-        %hold on
+        desired_traj = zeros(2, mytStepFinal);
+        for t = 1:mytStepFinal
+            theta_t = AgentPDT.theta_traj(t);
+            d_des_t = AgentPDT.d_des_traj(t);
+            % Position on desired trajectory at angle theta_t and distance d_des_t from centroid
+            desired_traj(:, t) = centroid + d_des_t * [cos(theta_t); sin(theta_t)];
+        end
+        plot(desired_traj(1,:), desired_traj(2,:), '--', ...
+            'LineWidth', 1, ...
+            'DisplayName', 'Desired Trajectory',...
+            'Color'      ,  [0.55, 0.45, 0.25]);   
+        hold on
 
+
+        hold on; % Hold on from the start
+        
+        % Plotting Target Estimation Errors
+
+        for i = 1:qtyTargets
+            
+            plot(AgentPDT.x_hat{i}(1, 1:mytStepFinal), AgentPDT.x_hat{i}(2, 1:mytStepFinal), ...
+                'LineWidth', 0.6, ...
+                'Color', [0.1; 0.9; 0.1],...
+                'DisplayName', ['Target ' num2str(i) ' Estimated Position']);
+        end
+    
+        hold on;
         
         
         % Plot the centroid by providing its x and y components separately
-        plot(centroid(1), centroid(2), 'b+', ...
+        plot(centroid(1), centroid(2), 'k+', ...
             'LineWidth', 1.1, ...
             'MarkerSize', 14, ...
             'DisplayName', 'Target centroid position $\mathbf{c}$')
@@ -167,6 +181,8 @@ targetColors = lines(qtyTargets);
     ylabel('y (m)')
     grid on
     set(gca,'FontSize', 10);
+    xlim([-5 10]);
+    ylim([-5 8]);
     legend('Interpreter','latex', 'Location','best');
 
 
@@ -210,36 +226,48 @@ end
 
 
 function closest_point = closestPointOnConvexHullAtAngle(theta, c_hat, x_hat_positions, r_s)
+% Calculates the point on a "safe" path offset from the convex hull
+% of the targets, as seen from the centroid 'c_hat' at a given angle 'theta'.
+
+    % --- Step 1: Compute Convex Hull ---
+    % Ensure at least 3 unique points for convhull
+    unique_pts = unique(x_hat_positions', 'rows');
+    if size(unique_pts, 1) < 3
+        % Fallback for 1 or 2 points: just offset from centroid
+        ray_direction = [cos(theta); sin(theta)];
+        closest_point = c_hat + r_s * ray_direction;
+        return;
+    end
     
-    % Compute convex hull
     K = convhull(x_hat_positions(1,:), x_hat_positions(2,:));
     hull_indices = K(1:end-1);  % Remove duplicate last point
     hull_vertices = x_hat_positions(:, hull_indices);
     num_hull_vertices = size(hull_vertices, 2);
     
-    % Ray direction from centroid at angle theta
+    % --- Step 2: Find Ray-Hull Intersection ---
     ray_direction = [cos(theta); sin(theta)];
     
-    % Find intersection of ray with convex hull edges
     max_distance = 0;
-    intersection_point = c_hat;
-    
+    intersection_point = c_hat; 
+    best_edge = [0; 0]; % Store the edge vector of the correct intersection
+
     for i = 1:num_hull_vertices
         v1 = hull_vertices(:, i);
         v2 = hull_vertices(:, mod(i, num_hull_vertices) + 1);
         
-        % Express edge relative to centroid
-        v1_rel = v1 - c_hat;
-        v2_rel = v2 - c_hat;
-        edge = v2_rel - v1_rel;
+        % Edge vector (world coordinates)
+        edge = v2 - v1; 
         
-        % Solve for intersection: t*ray_direction = v1_rel + s*edge
-        % [ray_direction, -edge] * [t; s] = v1_rel
+        % Solve for intersection: c_hat + t*ray_direction = v1 + s*edge
+        % [ray_direction, -edge] * [t; s] = v1 - c_hat
         A = [ray_direction, -edge];
+        b_vec = v1 - c_hat;
+        
         det_A = det(A);
         
+        % Check if ray is parallel to edge
         if abs(det_A) > 1e-10
-            params = A \ v1_rel;
+            params = A \ b_vec;
             t = params(1);  % Distance along ray from centroid
             s = params(2);  % Position along edge (0 to 1)
             
@@ -247,14 +275,37 @@ function closest_point = closestPointOnConvexHullAtAngle(theta, c_hat, x_hat_pos
             if t > 0 && s >= 0 && s <= 1
                 if t > max_distance
                     max_distance = t;
-                    intersection_point = c_hat + t * ray_direction;
+                    % This is the point on the hull boundary
+                    intersection_point = c_hat + t * ray_direction; 
+                    best_edge = edge; % Store this edge
                 end
             end
         end
     end
     
-    % Offset the intersection point outward by r_s in the direction of the ray
-    closest_point = c_hat + (max_distance + r_s) * ray_direction;
+    % --- Step 3: Offset Intersection Point Perpendicularly ---
+    
+    if max_distance == 0
+        % No intersection found (e.g., c_hat is outside hull)
+        % Fallback: just offset along the ray
+        closest_point = c_hat + r_s * ray_direction;
+        return;
+    end
+
+    % Calculate the outward normal vector to the 'best_edge'
+    edge_dir = best_edge;
+    % Get the perpendicular vector (rotate 90 degrees)
+    normal = [edge_dir(2); -edge_dir(1)]; 
+    normal = normal / (norm(normal) + 1e-9); % Normalize
+    
+    % Ensure the normal points "outward" relative to the centroid
+    % (i.e., in the same general direction as the ray from the centroid)
+    if dot(normal, ray_direction) < 0
+        normal = -normal;
+    end
+    
+    % Offset the intersection point outward by r_s in the *normal direction*
+    closest_point = intersection_point + r_s * normal;
 end
 
 

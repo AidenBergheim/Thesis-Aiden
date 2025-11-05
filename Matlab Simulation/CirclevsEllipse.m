@@ -64,8 +64,8 @@ clc
         % Desired Distance to Targets
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 6 + 0.2*sin(30*time) + time;
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeConvexHullRadius(theta, c_hat, x_hat_positions, y);
-        d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinCircleRadius(theta, c_hat, x_hat_positions, y);
-        %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinEllipseRadius(theta, c_hat, x_hat_positions, y);
+        d_des_handle1 = @(time, theta, x_hat_positions, c_hat, y) computeMinCircleRadius(theta, c_hat, x_hat_positions, y);
+        d_des_handle2 = @(time, theta, x_hat_positions, c_hat, y) computeMinEllipseRadius(theta, c_hat, x_hat_positions, y);
         
 
     % ----------------------------------------
@@ -73,8 +73,11 @@ clc
     % ----------------------------------------
     
     % Agent utilizing controller and localization from Sui et al. (2025)
-    AgentPDT = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
-                        alpha_1, alpha_2, d_des_handle, tSteps, qtyTargets, Targets, initial_heading);
+    AgentCircle = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
+                        alpha_1, alpha_2, d_des_handle1, tSteps, qtyTargets, Targets, initial_heading);
+
+    AgentEllipse = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
+                        alpha_1, alpha_2, d_des_handle2, tSteps, qtyTargets, Targets, initial_heading);
 
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -82,11 +85,17 @@ clc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for t = 1:tSteps
-    AgentPDT = AgentPDT.updateDesiredDistance(t, dT);
-    AgentPDT = AgentPDT.getBearings(t, Targets);                    % --- Take bearing measurements
-    AgentPDT = AgentPDT.estimateTargetPDT(t, dT, Targets);          % --- Run estimator
-    AgentPDT = AgentPDT.controlInputPDT(t, Tc1, dT);                % --- Run control law
-    AgentPDT = AgentPDT.move(dT, t);                                % --- Execute control law
+    AgentCircle = AgentCircle.updateDesiredDistance(t, dT);
+    AgentCircle = AgentCircle.getBearings(t, Targets);                    % --- Take bearing measurements
+    AgentCircle = AgentCircle.estimateTargetPDT(t, dT, Targets);          % --- Run estimator
+    AgentCircle = AgentCircle.controlInputPDT(t, Tc1, dT);                % --- Run control law
+    AgentCircle = AgentCircle.move(dT, t);                                % --- Execute control law
+
+    AgentEllipse = AgentEllipse.updateDesiredDistance(t, dT);
+    AgentEllipse = AgentEllipse.getBearings(t, Targets);                    % --- Take bearing measurements
+    AgentEllipse = AgentEllipse.estimateTargetPDT(t, dT, Targets);          % --- Run estimator
+    AgentEllipse = AgentEllipse.controlInputPDT(t, Tc1, dT);                % --- Run control law
+    AgentEllipse = AgentEllipse.move(dT, t);                                % --- Execute control law
 
 end
 
@@ -116,13 +125,13 @@ targetColors = lines(qtyTargets);
                 plot(xT, yT, 'r+', ...
                     'LineWidth', 0.7, ...
                     'MarkerSize', 7, ...
-                    'Color', 'k', ...
+                    'Color', 'r', ...
                     'DisplayName', 'Target positions $\mathbf{x}_i$');
             else
                 plot(xT, yT, 'r+', ...
                     'LineWidth', 0.7, ...
                     'MarkerSize', 7, ...
-                    'Color', 'k', ...
+                    'Color', 'r', ...
                     'HandleVisibility', 'off');
             end
         end
@@ -131,11 +140,22 @@ targetColors = lines(qtyTargets);
     % Plotting PDT Agent
     
         % plot trajectory of the single agent
-        plot(AgentPDT.p_traj(1,1:mytStepFinal), AgentPDT.p_traj(2,1:mytStepFinal), ...
+        plot(AgentCircle.p_traj(1,1:mytStepFinal), AgentCircle.p_traj(2,1:mytStepFinal), ...
             'LineWidth', 0.8, ...
-            'DisplayName', '$$\mbox{\boldmath$y$}(t)$$ [Controller Inspried by Sui et al. (2025)]',...
+            'DisplayName', '$$\mbox{\boldmath$y$}(t)$$ Following Minimum Enclosing Circle',...
             'Color'      ,  [0.3, 0.4, 1]);   
         hold on
+
+
+
+        plot(AgentEllipse.p_traj(1,1:mytStepFinal), AgentEllipse.p_traj(2,1:mytStepFinal), ...
+            'LineWidth', 0.8, ...
+            'DisplayName', '$$\mbox{\boldmath$y$}(t)$$ Following Approximate Minimum Ellipse',...
+            'Color'      ,  [0.7, 0.2, 0.7]);   
+        hold on
+
+
+
         centroid = mean(Targets, 2);
         %desired_traj = zeros(2, mytStepFinal);
         %for t = 1:mytStepFinal
@@ -155,19 +175,19 @@ targetColors = lines(qtyTargets);
         
         % Plotting Target Estimation Errors
 
-        for i = 1:qtyTargets
+        %for i = 1:qtyTargets
             
-            plot(AgentPDT.x_hat{i}(1, 1:mytStepFinal), AgentPDT.x_hat{i}(2, 1:mytStepFinal), ...
-                'LineWidth', 0.6, ...
-                'Color', [0.1; 0.9; 0.1],...
-                'DisplayName', ['Target ' num2str(i) ' Estimated Position']);
-        end
+        %    plot(AgentPDT.x_hat{i}(1, 1:mytStepFinal), AgentPDT.x_hat{i}(2, 1:mytStepFinal), ...
+        %        'LineWidth', 0.6, ...
+        %        'Color', [0.1; 0.9; 0.1],...
+        %        'DisplayName', ['Target ' num2str(i) ' Estimated Position']);
+        %end
     
         hold on;
         
         
         % Plot the centroid by providing its x and y components separately
-        plot(centroid(1), centroid(2), 'b+', ...
+        plot(centroid(1), centroid(2), 'k+', ...
             'LineWidth', 1.1, ...
             'MarkerSize', 14, ...
             'DisplayName', 'Target centroid position $\mathbf{c}$')
@@ -182,7 +202,7 @@ targetColors = lines(qtyTargets);
     grid on
     set(gca,'FontSize', 10);
     xlim([-5 10]);
-    ylim([])
+    ylim([-5 8]);
     legend('Interpreter','latex', 'Location','best');
 
 
@@ -194,11 +214,18 @@ targetColors = lines(qtyTargets);
     
     % Plotting PDT Agent
     
-        plot(real(AgentPDT.delta_traj),...
-            'DisplayName', '$$\delta(t)=d(t)-d^*$$ [Controller Inspried by Sui et al. (2025)]', ...
+        plot(real(AgentCircle.delta_traj),...
+            'DisplayName', '$$\delta(t)=d(t)-d^*(t)$$ Following Minimum Enclosing Circle', ...
             'LineWidth', 1.6, ...
-            'Color'      ,  [0.85, 0.15, 0.15]);
+            'Color'      ,  [0.3, 0.4, 1]);
         hold on
+
+        plot(real(AgentEllipse.delta_traj),...
+            'DisplayName', '$$\delta(t)=d(t)-d^*(t)$$ Following Approximate Minimum Ellipse', ...
+            'LineWidth', 1.6, ...
+            'Color'      ,  [0.7, 0.2, 0.7]);
+        hold on
+
 
     xlim([0,tFinal/dT])
     xticks([0,0.4/dT,2/dT:2/dT:tFinal/dT])
