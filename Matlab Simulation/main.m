@@ -17,7 +17,7 @@ clc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     tBegin = 0;             % (seconds)
-    tFinal = 10;            % (seconds)
+    tFinal = 20;            % (seconds)
     dT     = 0.005;         % (seconds)
     
     tSteps = (tFinal-tBegin)/dT;   % force tSteps to be an integer
@@ -26,7 +26,7 @@ clc
     %        Define Multiple Targets
     % ----------------------------------------
     
-    Targets       = [-2, 4, 2, 1; 
+    Targets       = 1/4 * [-2, 4, 2, 1; 
                      0, 5, 0, 1];    % initial location of the target 
     
     qtyTargets = size(Targets, 2);
@@ -37,23 +37,23 @@ clc
     
     % ---- Initial Conditions ----
     
-        p_0             = [8; 0];      % initial location of the agent 
+        p_0             = 1/4 * [8; 0];      % initial location of the agent 
        
-        x_hat_0         = [7.7, 7.812, 7.7, 7.703; 
+        x_hat_0         = 1/4 * [7.7, 7.812, 7.7, 7.703; 
                            0, 0.234, 0, 0.042];   % agent's initial guess of target positions
     
     % ---- Control Constants ----
     
         % control gain for adjusting tangential speed  
-            k_omega = 5;           
+            k_omega = 1;           
        
         % PDT algorthm parameters
             beta_1 = 0.5;          
             beta_2 = 0.5;
             alpha_1 = 0.5;
-            alpha_2 = 0.5;
-            Tc1 = 0.1;
-            Tc2 = 0.2;
+            alpha_2 = 0.8;
+            Tc1 = 1;
+            Tc2 = 2;
 
         % Cao algorithm parameters
             alpha = 5;
@@ -62,10 +62,11 @@ clc
             initial_heading = pi/2;
     
         % Desired Distance to Targets
-        d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 5 + 0.2*sin(30*time)
+        %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 1;
+        %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 5 + 0.5*sin(2*time);
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeConvexHullRadius(theta, c_hat, x_hat_positions, y);
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinCircleRadius(theta, c_hat, x_hat_positions, y);
-        %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinEllipseRadius(theta, c_hat, x_hat_positions, y);
+        d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinEllipseRadius(theta, c_hat, x_hat_positions, y);
         
 
     % ----------------------------------------
@@ -84,7 +85,7 @@ clc
 for t = 1:tSteps
     AgentPDT = AgentPDT.updateDesiredDistance(t, dT);
     AgentPDT = AgentPDT.getBearings(t, Targets);                    % --- Take bearing measurements
-    AgentPDT = AgentPDT.estimateTargetPDT(t, dT, Targets);          % --- Run estimator
+    AgentPDT = AgentPDT.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
     AgentPDT = AgentPDT.controlInputPDT(t, Tc1, dT);                % --- Run control law
     AgentPDT = AgentPDT.move(dT, t);                                % --- Execute control law
 
@@ -131,7 +132,7 @@ targetColors = lines(qtyTargets);
     % Plotting PDT Agent
     
         % plot trajectory of the single agent
-        plot(AgentPDT.p_traj(1,1:mytStepFinal), AgentPDT.p_traj(2,1:mytStepFinal), ...
+        plot(AgentPDT.p_traj(1,1:length(AgentPDT.p_traj)), AgentPDT.p_traj(2,1:length(AgentPDT.p_traj)), ...
             'LineWidth', 0.8, ...
             'DisplayName', '$$\mbox{\boldmath$y$}(t)$$ [Controller Inspried by Sui et al. (2025)]',...
             'Color'      ,  [0.3, 0.4, 1]);   

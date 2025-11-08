@@ -13,14 +13,11 @@ System variables are mostly stored in quad_global_variables.py
 The control law should be implemented in a separate file, for example,
 'quad_controller_someFancyControlLaw.py', and then called in this file.
 
-The provided sample controller, 'quad_controller_PID.py', controls a 
-single crazyflie quadcopter to hover at a prescribed height while not 
-drifting on a horizontal plane. However, the provided Python files
-can be easily modified to accommdate multiple Crazyflies and serve as
-a experimental platform for multi-agent-system-related projects.
+This file is developed for the experimental verification of the adaptive
+wind disturbance controller for the bearing-only target localization and
+circumnavigation problem (WD-BoTLC)
 
-Authors:    originally written by Juri Hemmi,
-            and heavily adopted by Donglin Sui
+Author(s): Donglin Sui
 """
 
 # --------------- Required Modules --------------------------------------------
@@ -46,7 +43,7 @@ from cflib.crazyflie import commander
 import quad_utilities as qu
 import quad_global_variables as qgv
 import quad_pilot as qp
-import quad_controller_ASMC as qc
+import quad_controller_PDT_v3_2f  as qc
 
 import csv
 import os
@@ -69,7 +66,7 @@ def main():
     qu.sensorLog_initializer() # Creates sensor log block
 
     # input your controller here
-    qc.my_height_control()  # Controls a single crazyflie to localize and
+    qc.my_PDT_BoTLC_control()  # Controls a single crazyflie to localize and
                             # circumnavigate around another stationary 
                             # crazyflie
 

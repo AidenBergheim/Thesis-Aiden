@@ -1,8 +1,9 @@
 
 ---
-For $t\in(0,t_{0,i}+T_i] \subset [0, T_{c,1})$, it holds that
+For $t\leq T_{c,1}$, it holds that
 
-$$\boldsymbol{\xi}_i(t)=\boldsymbol{\tilde{x}_i}(t)$$
-
+$$P_i(t)x=q_i(t)$$
 # Proof
 ---
+Let $\boldsymbol{f}(x):=P(t)\boldsymbol{x}_i-\boldsymbol{q}(t)$ be an auxiliary function, whose time derivative is obtained as
+

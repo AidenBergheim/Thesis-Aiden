@@ -20,7 +20,6 @@ classdef Agent
     
         % ---- Target state estimators ----
             x_hat               % 1xN cell: each cell contains 2xT matrix of estimated target positions over time
-            x_hat_curr
             x_hat_dot           % 1xN cell: each cell contains 2xT matrix of target position derivatives over time
             P                   % 1xN cell: each cell contains 1xT cell of 2x2 covariance matrices
             q                   % 1xN cell: each cell contains 1xT cell of 2x1 process noise vectors
@@ -156,7 +155,7 @@ classdef Agent
                 x_hat_positions(:, i) = obj.x_hat{i}(:, cur_tStep);
             end
         
-            theta = atan2(obj.p(2) - obj.c_hat(2), obj.p(1) - obj.c_hat(1));
+            theta = atan2(obj.p(2) - obj.c(2), obj.p(1) - obj.c(1));
 
             obj.theta_traj(t) = theta;
         
@@ -201,62 +200,71 @@ classdef Agent
             obj.bar_psi = [ cos(pi/2), sin(pi/2);
                             -sin(pi/2), cos(pi/2)] * obj.psi;
             
-            obj.delta_traj(t) = norm(obj.c_hat - obj.p) - obj.d_des;
+            obj.delta_traj(t) = norm(obj.c - obj.p) - obj.d_des;
         end
 
 
         % Individual target estimator from Sui et al. (2025)
-        function obj = estimateTargetPDT(obj, cur_tStep, dT, targets, Tc1)
+        function obj = estimateTargetPDT(obj, cur_tStep, dT, targets)
             t = cur_tStep;
             numTargets = size(targets, 2);
             latest_x_hats = zeros(2, numTargets);
-            
+
+            % Estimating each target
             for i = 1:numTargets
 
-                % Estimate each target
-                if t*dT < Tc1
-                    if t <= 2
-                        obj.x_hat_dot{i}(:, t) = zeros(2, 1);
-                    else
-                        % Finding x_hat_dot
-                        xi = inv(obj.P{i}{t}) * (obj.P{i}{t} * obj.x_hat{i}(:, t) - obj.q{i}{t});
-                        if norm(xi) == 0
-                            Psi_a = zeros(2, 1);
-                        else
-                            Psi_a = xi ./ (norm(xi) ^ obj.alpha_1);
-                        end
-                        obj.x_hat_dot{i}(:, t) = -1 / (obj.Tc1 * obj.alpha_1) * exp(norm(xi) ^ obj.alpha_1) * Psi_a;
-                    end
-                    % Updating kreisselmeier's regressor
-                    P_dot = -obj.P{i}{t} + obj.bar_varphi{i} * obj.bar_varphi{i}.';
-                    q_dot = -obj.q{i}{t} + obj.bar_varphi{i} * obj.bar_varphi{i}.' * obj.p;
-                    obj.P{i}{t+1} = obj.P{i}{t} + P_dot * dT;
-                    obj.q{i}{t+1} = obj.q{i}{t} + q_dot * dT;
-
-                % Just continue propogating values if past Tc1
+                % Ensuring not out of bound of x_hat_dot object 
+                if t <= 2
+                    obj.x_hat_dot{i}(:, t) = zeros(2, 1);
                 else
-                    obj.x_hat_dot{i}(:, t) = zeros(2, 1); % Assume static target
-                    obj.P{i}{t+1} = obj.P{i}{t};         % Propagate P
-                    obj.q{i}{t+1} = obj.q{i}{t};         % Propagate q
+                    
+                    % Finding x_hat_dot
+                    xi = inv(obj.P{i}{t}) * (obj.P{i}{t} * obj.x_hat{i}(:, t) - obj.q{i}{t});
+                    if norm(xi) == 0
+                        Psi_a = zeros(2, 1);
+                    else
+                        Psi_a = xi ./ (norm(xi) ^ obj.alpha_1);
+                    end
+                    obj.x_hat_dot{i}(:, t) = -1 / (obj.Tc1 * obj.alpha_1) * exp(norm(xi) ^ obj.alpha_1) * Psi_a;
                 end
 
+                % Updating kreisselmeier's regressor
+                P_dot = -obj.P{i}{t} + obj.bar_varphi{i} * obj.bar_varphi{i}.';
+                q_dot = -obj.q{i}{t} + obj.bar_varphi{i} * obj.bar_varphi{i}.' * obj.p;
+
+                obj.P{i}{t+1} = obj.P{i}{t} + P_dot * dT;
+                obj.q{i}{t+1} = obj.q{i}{t} + q_dot * dT;
+
+                % Euler approximate of new x_hat
                 if t + 1 <= size(obj.x_hat{i}, 2)
                     obj.x_hat{i}(:, t+1) = obj.x_hat{i}(:, t) + obj.x_hat_dot{i}(:, t) * dT;
                 end
+
                 latest_x_hats(:, i) = obj.x_hat{i}(:, t);
             end
             
-            % This must also always run, as updateDesiredDistance depends on it
             obj.c_hat = mean(latest_x_hats, 2);
         end
+
 
         % Calculating Control input for controller inspired by Sui et al. (2025)
         function obj = controlInputPDT(obj, t, Tc1, dT)
 
-            % Error in distance to shape
+            % Error in distance to convex hull
+            
+
             obj.d_tilde = norm(obj.c - obj.p) - obj.d_des;
 
-            if t*dT < Tc1
+            Pzero = 0;
+            epsilon = 0.0000000001;
+            for i = 1:length(obj.x_hat)
+   
+                if det(obj.P{i}{t}) < epsilon && det(obj.P{i}{t}) > - epsilon
+                    Pzero = 1;
+                end
+            end
+
+            if Pzero == 1
                 obj.u = obj.k_omega  * obj.bar_psi;
             else
                 v_cen = 1/(obj.alpha_2 * obj.Tc2) * exp(abs(obj.d_tilde) ^ obj.alpha_2) * sig(obj.d_tilde, 1 - obj.alpha_2) - obj.d_des_dot;

@@ -15,9 +15,9 @@
               "state": {
                 "file": "Proof Mind Map/Proof Mind Map.canvas",
                 "viewState": {
-                  "x": 860,
-                  "y": 290,
-                  "zoom": -3.24971302733596
+                  "x": 1815.955623951961,
+                  "y": 503.02141173527286,
+                  "zoom": -1.8375798729585253
                 }
               },
               "icon": "lucide-layout-dashboard",
@@ -81,7 +81,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "a2f583817b864e24",
@@ -174,6 +175,9 @@
   },
   "active": "8552aa40cd637385",
   "lastOpenFiles": [
+    "Proof Mind Map/Proof Mind Map OLD.canvas",
+    "Proof Mind Map/Proof Mind Map.md",
+    "Proof Mind Map/Dynamics.md",
     "Proof Mind Map/Proof Mind Map.canvas",
     "Obsidian/Pasted image 20251029123321.png",
     "Obsidian/Pasted image 20251029122944.png",
@@ -206,8 +210,6 @@
     "Obsidian/Proof Mind Map/Lemma 6.md",
     "Obsidian/Proof Mind Map/Lemma 4.md",
     "Obsidian/Proof Mind Map/Lemma 3.md",
-    "Obsidian/Proof Mind Map/Lemma 1.md",
-    "Obsidian/Proof Mind Map/Dynamics.md",
     "Obsidian/Proof Mind Map",
     "Obsidian",
     "New folder",
