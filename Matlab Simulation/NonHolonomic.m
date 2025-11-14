@@ -18,7 +18,7 @@ clc
 
     tBegin = 0;             % (seconds)
     tFinal = 30;            % (seconds)
-    dT     = 0.005;         % (seconds)
+    dT     = 0.002;         % (seconds)
     
     tSteps = (tFinal-tBegin)/dT;   % force tSteps to be an integer
 
@@ -50,7 +50,7 @@ clc
         % PDT algorthm parameters
 
             alpha_1 = 0.8;
-            alpha_2 = 0.9;
+            alpha_2 = 0.05;
             Tc1 = 1;
             Tc2 = 1;
 
@@ -72,10 +72,10 @@ clc
     % ----------------------------------------
     
     % Agent utilizing controller and localization from Sui et al. (2025)
-    AgentCircle = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
-                        alpha_1, alpha_2, d_des_handle1, tSteps, qtyTargets, Targets, initial_heading);
+    AgentHolonomic = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
+                        alpha_1, alpha_2, d_des_handle2, tSteps, qtyTargets, Targets, initial_heading);
 
-    AgentEllipse = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
+    AgentNonholonomic = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
                         alpha_1, alpha_2, d_des_handle2, tSteps, qtyTargets, Targets, initial_heading);
 
 
@@ -84,17 +84,17 @@ clc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for t = 1:tSteps
-    AgentCircle = AgentCircle.updateDesiredDistance(t, dT);
-    AgentCircle = AgentCircle.getBearings(t, Targets);                    % --- Take bearing measurements
-    AgentCircle = AgentCircle.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
-    AgentCircle = AgentCircle.controlInputPDT(t, Tc1, dT);                % --- Run control law
-    AgentCircle = AgentCircle.move(dT, t);                                % --- Execute control law
+    AgentHolonomic = AgentHolonomic.updateDesiredDistance(t, dT);
+    AgentHolonomic = AgentHolonomic.getBearings(t, Targets);                    % --- Take bearing measurements
+    AgentHolonomic = AgentHolonomic.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
+    AgentHolonomic = AgentHolonomic.controlInputPDT(t, Tc1, dT);                % --- Run control law
+    AgentHolonomic = AgentHolonomic.move(dT, t);                                % --- Execute control law
 
-    AgentEllipse = AgentEllipse.updateDesiredDistance(t, dT);
-    AgentEllipse = AgentEllipse.getBearings(t, Targets);                    % --- Take bearing measurements
-    AgentEllipse = AgentEllipse.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
-    AgentEllipse = AgentEllipse.controlInputPDT(t, Tc1, dT);                % --- Run control law
-    AgentEllipse = AgentEllipse.move(dT, t);                                % --- Execute control law
+    AgentNonholonomic = AgentNonholonomic.updateDesiredDistance(t, dT);
+    AgentNonholonomic = AgentNonholonomic.getBearings(t, Targets);                    % --- Take bearing measurements
+    AgentNonholonomic = AgentNonholonomic.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
+    AgentNonholonomic = AgentNonholonomic.controlInputPDT(t, Tc1, dT);                % --- Run control law
+    AgentNonholonomic = AgentNonholonomic.moveNonHolonomic(dT, t);                                % --- Execute control law
 
 end
 
@@ -103,63 +103,64 @@ end
 %               Plotting
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 mytStepFinal = max(1, min(round(tFinal/dT), tSteps)); % ensure integer index
-targetColors = lines(qtyTargets); 
-       
+targetColors = lines(qtyTargets);
 %  ---- Create a single figure for side-by-side subplots -----
 figure;
-
 %  ---- First Subplot: Agent Trajectory -----
 subplot(1,2,1);
 plot_traj = gca;
 hold on;
-
 % Plotting actual target positions
-    for i = 1:qtyTargets
+for i = 1:qtyTargets
         xT = Targets(1, i);
         yT = Targets(2, i);
-    
-        if i == 1
-            plot(xT, yT, 'k+', ...
-                'LineWidth', 1, ...
-                'MarkerSize', 7, ...
-                'Color', 'k', ...
-                'DisplayName', 'Target positions $\mathbf{x}_i$');
-        else
-            plot(xT, yT, 'k+', ...
-                'LineWidth', 1, ...
-                'MarkerSize', 7, ...
-                'Color', 'k', ...
-                'HandleVisibility', 'off');
-        end
-    end
-
-
+if i == 1
+            plot(xT, yT, 'b+', ...
+'LineWidth', 1, ...
+'MarkerSize', 7, ...
+'Color', 'b', ...
+'DisplayName', 'Target positions $$\mbox{\boldmath$x$}_i$$');
+else
+            plot(xT, yT, 'b+', ...
+'LineWidth', 1, ...
+'MarkerSize', 7, ...
+'Color', 'b', ...
+'HandleVisibility', 'off');
+end
+end
 % Plotting PDT Agent
+% plot trajectory of the single agent
+    plot(AgentNonholonomic.p_traj(1,1:mytStepFinal), AgentNonholonomic.p_traj(2,1:mytStepFinal), ...
+'LineWidth', 1, ...
+'DisplayName', '$$\mbox{\boldmath$y$}(t)$$ [Nonholonomic Agent]',...
+'Color'      ,  'k');
 
-    % plot trajectory of the single agent
-    plot(AgentCircle.p_traj(1,1:mytStepFinal), AgentCircle.p_traj(2,1:mytStepFinal), ...
-        'LineWidth', 1.2, ...
-        'DisplayName', '$$\mbox{\boldmath$y$}(t)$$ [Minimum Enclosing Circle]',...
-        'Color'      ,  [0.3, 0.4, 1]);   
-    hold on
-    plot(AgentEllipse.p_traj(1,1:mytStepFinal), AgentEllipse.p_traj(2,1:mytStepFinal), ...
-        'LineWidth', 1.2, ...
-        'DisplayName', '$$\mbox{\boldmath$y$}(t)$$ [Approximate Minimum Ellipse]',...
-        'Color'      ,  [1, 0.2, 0.2]);   
+% Plot starting position (open circle)
+    plot(AgentNonholonomic.p_traj(1,1), AgentNonholonomic.p_traj(2,1), 'o', ...
+'MarkerSize', 8, ...
+'MarkerEdgeColor', 'k', ...
+'MarkerFaceColor', 'none', ...
+'LineWidth', 1.5, ...
+'DisplayName', '$$\mbox{\boldmath$y$}(0)$$');
+
+% Plot ending position (filled circle)
+    plot(AgentNonholonomic.p_traj(1,mytStepFinal), AgentNonholonomic.p_traj(2,mytStepFinal), 'o', ...
+'MarkerSize', 8, ...
+'MarkerEdgeColor', 'k', ...
+'MarkerFaceColor', 'k', ...
+'LineWidth', 1.5, ...
+'DisplayName', '$$\mbox{\boldmath$y$}(30)$$');
+
     hold on
     centroid = mean(Targets, 2);
-    % (Omitted commented-out code for clarity)
+% (Omitted commented-out code for clarity)
     hold on;
-    
-    % (Omitted commented-out code for clarity)
+% (Omitted commented-out code for clarity)
     hold on;
-        
-    % (Omitted commented-out code for clarity)
-    %hold on
-
+% (Omitted commented-out code for clarity)
+%hold on
 % ==== Axis properties ====
 axis equal
-
 title('(a) Agent Trajectories', 'Interpreter','latex')
 xlabel('x (m)', 'Interpreter','latex')
 ylabel('y (m)','Interpreter','latex')
@@ -169,48 +170,37 @@ xlim([-5 10]);
 ylim([-5 8]);
 box on;
 legend('Interpreter','latex', 'Location','best');
-
-
 %  ---- Second Subplot: Tracking Error -----
 subplot(1,2,2)
-plot_errors = gca; % Get the axes handle first
-
-
+plot_errors = gca; % Get the axes handle
+hold on
 % Plotting PDT Agent
-
-    plot(real(AgentCircle.delta_traj),...
-        'DisplayName', '$$\delta(t)$$ [Minimum Enclosing Circle]', ...
-        'LineWidth', 1.6, ...
-        'Color'      ,  [0.3, 0.4, 1]);
-    hold on
-    plot(real(AgentEllipse.delta_traj),...
-        'DisplayName', '$$\delta(t)$$ [Approximate Minimum Ellipse]', ...
-        'LineWidth', 1.6, ...
-        'Color'      ,  [1, 0.2, 0.2], ...
-        'LineStyle'  ,  '--');
-    hold on
-    
+    plot(real(AgentNonholonomic.delta_traj),...
+'DisplayName', '$$\delta(t)$$ [Nonholonomic Agent]', ...
+'LineWidth', 1, ...
+'Color'      ,  'k');
+% --- Add Vertical Line for Tracking Convergence (Tc1 + Tc2) ---
+if exist('Tc1', 'var') && exist('Tc2', 'var')
+        xline((Tc1 + Tc2)/dT, '-.', {'$T_{c,1} + T_{c,2}$'}, ...
+'Interpreter', 'latex', ...
+'FontSize', 10, ...
+'LabelVerticalAlignment', 'top', ...
+'HandleVisibility', 'off');
+end
 % --- Configure axes *after* plotting ---
 xlim([0,tFinal/dT])
 xticks(0 : 5/dT : tFinal/dT);
 xt = get(gca, 'XTick');
 set(gca, 'XTick',xt, 'XTickLabel',xt*dT);
-
 title('(b) Tracking Errors', 'Interpreter','latex')
 xlabel('time (sec)', 'Interpreter','latex')
 ylabel('Errors (m)', 'Interpreter','latex')
 ylim([-2 5])
-
-hold on    
-    
 grid on
+box on;
 set(gca,'FontSize', 14);
-
-% --- MOVED THIS LINE ---
-% Set the aspect ratio *after* all other properties
-pbaspect([3 1 1]); 
-% ---------------------
-
+% --- Set the aspect ratio *after* all other properties ---
+pbaspect([3 1 1]);
 legend('Interpreter','latex', 'Location','best');
 
 % sig function used for algorithms in Sui et al. (2025)

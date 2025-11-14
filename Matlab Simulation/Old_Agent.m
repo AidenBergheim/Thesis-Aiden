@@ -32,7 +32,6 @@ classdef Agent
             u                   % 2x1 vector: current velocity command
             c                   % 2x1 vector: Actual targets centroid position
             c_hat               % 2x1 vector: Estimated targets centroid position
-            localization_heading
 
     
         % ---- Control gains and parameters ----
@@ -117,7 +116,6 @@ classdef Agent
             obj.varrho_traj = cell(1, numTargets);       % Varrho trajectory per target
             obj.x_tilde_traj = cell(1, numTargets);      % Target position estimation error
             obj.projPoint_traj = zeros(2, tSteps);       % Projection point trajectory
-            obj.localization_heading = zeros(2,1);
         
             % Initialise per-target variables
             for i = 1:numTargets
@@ -173,14 +171,15 @@ classdef Agent
         end
 
         % Getting bearing measurement to each target
-        % Getting bearing measurement to each target
         function obj = getBearings(obj, cur_tStep, targets)
             t = cur_tStep;
             numTargets = size(targets, 2);
             distances = zeros(1, numTargets);
             varphi_matrix = zeros(2, numTargets);
+
             % Bearings to each target
             for i = 1:numTargets
+
                 % Only using distance to target for plotting and to
                 % calculate bearing, not actually used by agent algorithms
                 target_pos = targets(:, i);  
@@ -188,43 +187,21 @@ classdef Agent
                 distances(i) = d_i;
                 obj.varphi{i} = (target_pos - obj.p) / d_i;
                 varphi_matrix(:, i) = obj.varphi{i};
+
                 % Finding bar_varphi, the rotated pi/2 vector of varphi
                 obj.bar_varphi{i} = [ cos(pi/2), sin(pi/2);
                                     -sin(pi/2), cos(pi/2)] * obj.varphi{i};
             end
-            % Bearings to centroid (This is the "average phi" method, not bisector)
-            obj.psi = (obj.c - obj.p) / norm((obj.c - obj.p));
+
+            % Bearings to centroid
+
+            avg_vector = mean(varphi_matrix, 2);
+            obj.psi = avg_vector / norm(avg_vector);
+
             obj.bar_psi = [ cos(pi/2), sin(pi/2);
                             -sin(pi/2), cos(pi/2)] * obj.psi;
             
             obj.delta_traj(t) = norm(obj.c_hat - obj.p) - obj.d_des;
-            
-            % --- CORRECTED LOCALIZATION HEADING ---
-            if obj.localization_heading == zeros(2,1)
-                % 1. Get all angles
-                angles = atan2(varphi_matrix(2, :), varphi_matrix(1, :));
-            
-                % 2. Find min and max angles
-                min_angle = min(angles);
-                max_angle = max(angles);
-                
-                % 3. Find the bisecting angle
-                bisect_angle = (min_angle + max_angle) / 2;
-                
-                % 4. Handle the wrap-around case (if arc is > 180 deg)
-                if (max_angle - min_angle) > pi
-                    bisect_angle = bisect_angle + pi;
-                end
-                
-                % 5. Calculate the PERPENDICULAR angle (add 90 degrees)
-                perp_angle = bisect_angle - (pi/2);
-                
-                % 6. Normalize angle to [-pi, pi]
-                perp_angle = wrapToPi(perp_angle);
-                
-                % 7. Convert this perpendicular angle into a 2x1 unit vector
-                obj.localization_heading = [cos(perp_angle); sin(perp_angle)];
-            end
         end
 
 
@@ -282,7 +259,7 @@ classdef Agent
             obj.d_tilde = norm(obj.c - obj.p) - obj.d_des;
 
             if t*dT < Tc1
-                obj.u = obj.k_omega  * obj.localization_heading;
+                obj.u = obj.k_omega  * obj.bar_psi;
             else
                 v_cen = 1/(obj.alpha_2 * obj.Tc2) * exp(abs(obj.d_tilde) ^ obj.alpha_2) * sig(obj.d_tilde, 1 - obj.alpha_2) - obj.d_des_dot;
                 obj.u = v_cen * obj.psi + obj.k_omega  * obj.bar_psi;

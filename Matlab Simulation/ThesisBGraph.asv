@@ -18,7 +18,7 @@ clc
 
     tBegin = 0;             % (seconds)
     tFinal = 38;            % (seconds)
-    dT     = 0.002;         % (seconds)
+    dT     = 0.01;         % (seconds)
     
     tSteps = (tFinal-tBegin)/dT;   % force tSteps to be an integer
 
@@ -52,7 +52,7 @@ clc
        
         % PDT algorthm parameters
             alpha_1 = 0.5;
-            alpha_2 = 0.05;
+            alpha_2 = 0.8;
             Tc1 = 1;
             Tc2 = 1;
 
@@ -64,10 +64,10 @@ clc
     
         % Desired Distance to Targets
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 1;
-        %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 5.7 + 0.2*sin(2.1*time);
+        d_des_handle1 = @(time, theta, x_hat_positions, c_hat, y) 5.7 + 0.2*sin(2.1*time);
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeConvexHullRadius(theta, c_hat, x_hat_positions, y);
-        %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinCircleRadius(theta, c_hat, x_hat_positions, y);
-        d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinEllipseRadius(theta, c_hat, x_hat_positions, y);
+        d_des_handle2 = @(time, theta, x_hat_positions, c_hat, y) computeMinCircleRadius(theta, c_hat, x_hat_positions, y);
+        d_des_handle3 = @(time, theta, x_hat_positions, c_hat, y) computeMinEllipseRadius(theta, c_hat, x_hat_positions, y);
         
 
     % ----------------------------------------
@@ -75,8 +75,14 @@ clc
     % ----------------------------------------
     
     % Agent utilizing controller and localization from Sui et al. (2025)
-    AgentPDT = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
-                        alpha_1, alpha_2, d_des_handle, tSteps, qtyTargets, Targets, initial_heading);
+    AgentPDT1 = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
+                        alpha_1, alpha_2, d_des_handle1, tSteps, qtyTargets, Targets, initial_heading);
+
+    AgentPDT2 = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
+                        alpha_1, alpha_2, d_des_handle2, tSteps, qtyTargets, Targets, initial_heading);
+
+    AgentPDT3 = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
+                        alpha_1, alpha_2, d_des_handle3, tSteps, qtyTargets, Targets, initial_heading);
 
 
     % For theoretical experimentation
@@ -110,11 +116,23 @@ clc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for t = 1:tSteps
-    AgentPDT = AgentPDT.updateDesiredDistance(t, dT);
-    AgentPDT = AgentPDT.getBearings(t, Targets);                    % --- Take bearing measurements
-    AgentPDT = AgentPDT.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
-    AgentPDT = AgentPDT.controlInputPDT(t, Tc1, dT);                % --- Run control law
-    AgentPDT = AgentPDT.moveNonHolonomic(dT, t);                                % --- Execute control law
+    AgentPDT1 = AgentPDT1.updateDesiredDistance(t, dT);
+    AgentPDT1 = AgentPDT1.getBearings(t, Targets);                    % --- Take bearing measurements
+    AgentPDT1 = AgentPDT1.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
+    AgentPDT1 = AgentPDT1.controlInputPDT(t, Tc1, dT);                % --- Run control law
+    AgentPDT1 = AgentPDT1.move(dT, t);                                % --- Execute control law
+
+    AgentPDT2 = AgentPDT2.updateDesiredDistance(t, dT);
+    AgentPDT2 = AgentPDT2.getBearings(t, Targets);                    % --- Take bearing measurements
+    AgentPDT2 = AgentPDT2.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
+    AgentPDT2 = AgentPDT2.controlInputPDT(t, Tc1, dT);                % --- Run control law
+    AgentPDT2 = AgentPDT2.move(dT, t);                                % --- Execute control law
+
+    AgentPDT3 = AgentPDT3.updateDesiredDistance(t, dT);
+    AgentPDT3 = AgentPDT3.getBearings(t, Targets);                    % --- Take bearing measurements
+    AgentPDT3 = AgentPDT3.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
+    AgentPDT3 = AgentPDT3.controlInputPDT(t, Tc1, dT);                % --- Run control law
+    AgentPDT3 = AgentPDT3.move(dT, t);                                % --- Execute control law
 
 end
 
@@ -125,64 +143,143 @@ end
 mytStepFinal = max(1, min(round(tFinal/dT), tSteps)); % ensure integer index
 targetColors = lines(qtyTargets); 
 t_vec = (0:mytStepFinal-1) * dT; % Create a time vector
-
 figure; % Create a new figure
 t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
 
 %  ---- (a) Agent Trajectory plot -----
-    % This plot is in column 1 and spans 2 rows
-    ax1 = nexttile(1, [2 1]); 
-    
-    hold(ax1, 'on');
-    
-    % Plotting actual target positions
-    for i = 1:qtyTargets
-        xT = Targets(1, i);
-        yT = Targets(2, i);
-        plot(ax1, xT, yT, 'k+', ...
-            'LineWidth', 1, ...
-            'MarkerSize', 7, ...
-            'Color', targetColors(i, :),...
-            'DisplayName', ['$$\mbox{\boldmath$x$}_' num2str(i) '$$']);
-    end
-    
-    % Plotting PDT Agent
-    plot(ax1, AgentPDT.p_traj(1,1:length(AgentPDT.p_traj)), AgentPDT.p_traj(2,1:length(AgentPDT.p_traj)), ...
+ax1 = nexttile(1, [2 1]); 
+hold(ax1, 'on');
+
+% 1. PRE-ALLOCATE HANDLES
+% We must capture these to force the legend order later
+h_targets = gobjects(qtyTargets, 1); 
+h_start   = gobjects(1, 1);
+h_finals  = gobjects(3, 1);
+h_paths   = gobjects(3, 1); % Assuming 3 agents (PDT1, PDT2, PDT3)
+
+
+
+% 2. PLOT TARGETS (Left Column of Legend)
+for i = 1:qtyTargets
+    xT = Targets(1, i);
+    yT = Targets(2, i);
+    h_targets(i) = plot(ax1, xT, yT, 'k+', ...
         'LineWidth', 1, ...
-        'DisplayName', '$$\mbox{\boldmath$y$}(t)$$',...
-        'Color'      ,  'k');   
-    
-    % ==== Axis properties ====
-    axis(ax1, 'equal');
-    title(ax1, '(a) Agent Trajectories', 'Interpreter','latex')
-    xlabel(ax1, 'x (m)', 'Interpreter','latex')
-    ylabel(ax1, 'y (m)', 'Interpreter','latex')
-    grid(ax1, 'on');
-    set(ax1, 'FontSize', 10);
-    xlim(ax1, [-6 11]);
-    ylim(ax1, [-6 9]);
-    legend(ax1, 'Interpreter','latex', 'Location','best');
-    hold(ax1, 'off');
+        'MarkerSize', 7, ...
+        'Color', targetColors(i, :),...
+        'DisplayName', ['$$\mbox{\boldmath$x$}_' num2str(i) '$$']);
+end
+
+
+
+% 4. PLOT START POSITION (Bottom Right)
+h_start = plot(AgentPDT1.p_traj(1,1), AgentPDT1.p_traj(2,1), 'o', ...
+    'MarkerSize', 8, ...
+    'MarkerEdgeColor', 'k', ...
+    'MarkerFaceColor', 'none', ...
+    'LineWidth', 1.5, ...
+    'DisplayName', '$$\mbox{\boldmath$y$}(0)$$');
+
+% 5. PLOT FINAL POSITIONS (Right Column of Legend)
+% Note: I've updated indices to match 1, 2, 3 for clarity in the handle array
+h_finals(1) = plot(AgentPDT1.p_traj(1,mytStepFinal), AgentPDT1.p_traj(2,mytStepFinal), 'o', ...
+    'MarkerSize', 8, ...
+    'MarkerEdgeColor', 'k', ...
+    'MarkerFaceColor', [0, 0.5, 0], ...
+    'LineWidth', 1.5, ...
+    'DisplayName', '$$\mbox{\boldmath$y$}(30)$$');
+
+h_finals(2) = plot(AgentPDT2.p_traj(1,mytStepFinal), AgentPDT2.p_traj(2,mytStepFinal), 'o', ...
+    'MarkerSize', 8, ...
+    'MarkerEdgeColor', 'k', ...
+    'MarkerFaceColor', 'b', ...
+    'LineWidth', 1.5, ...
+    'DisplayName', '$$\mbox{\boldmath$y$}(30)$$');    
+
+h_finals(3) = plot(AgentPDT3.p_traj(1,mytStepFinal), AgentPDT3.p_traj(2,mytStepFinal), 'o', ...
+    'MarkerSize', 8, ...
+    'MarkerEdgeColor', 'k', ...
+    'MarkerFaceColor', 'r', ...
+    'LineWidth', 1.5, ...
+    'DisplayName', '$$\mbox{\boldmath$y$}(30)$$');
+
+% 3. PLOT PATHS (Bottom of Left/Right Columns)
+h_paths(1) = plot(ax1, AgentPDT1.p_traj(1,:), AgentPDT1.p_traj(2,:), ...
+    'LineWidth', 1, ...
+    'Color', [0, 0.5, 0], ...
+    'DisplayName', '$$\mbox{\boldmath$y$}(t)$$ [Sinusoidal]');   
+
+h_paths(2) = plot(ax1, AgentPDT2.p_traj(1,:), AgentPDT2.p_traj(2,:), ...
+    'LineWidth', 1, ...
+    'Color', 'b', ...
+    'DisplayName', '$$\mbox{\boldmath$y$}(t)$$ [Min. Circle]');   
+
+h_paths(3) = plot(ax1, AgentPDT3.p_traj(1,:), AgentPDT3.p_traj(2,:), ...
+    'LineWidth', 1, ...
+    'Color', 'r', ...
+    'DisplayName', '$$\mbox{\boldmath$y$}(t)$$ [Approx. Min. Ellipse]');  
+
+% ==== Axis properties ====
+axis(ax1, 'equal');
+box(ax1, 'on'); 
+title(ax1, '(a) Agent Trajectories', 'Interpreter','latex')
+xlabel(ax1, 'x (m)', 'Interpreter','latex')
+ylabel(ax1, 'y (m)', 'Interpreter','latex')
+grid(ax1, 'on');
+set(ax1, 'FontSize', 10);
+xlim(ax1, [-6 11]);
+ylim(ax1, [-6 14]);
+
+% ==== CUSTOM LEGEND ORDERING ====
+% MATLAB fills legends Column-by-Column (Top-Down) by default.
+% To get Targets Left | Finals Right, we construct two stacks:
+
+% Stack 1 (Left Column): All Targets, then some Paths
+stack_left = [h_targets]; 
+stack_right = [h_start; h_finals; h_paths(3); ];
+
+stack_right = [h_paths(1:3)];
+
+% Stack 2 (Right Column): All Finals, then remaining Path + Start
+
+
+% Combine them
+legend_handles = [stack_left; stack_right];
+
+legend(ax1, legend_handles, 'Interpreter','latex', 'Location','best', 'NumColumns', 2);
+hold(ax1, 'off');
 
 % ------- (b) Estimate Trajectories plot --------
     % This plot is in column 2 and spans 2 rows
     ax2 = nexttile(2, [2 1]); 
     hold(ax2, 'on');
     
-    % Plotting Target Estimation Errors
+    % Second, plot all trajectories (column 2 of legend)
     for i = 1:qtyTargets
-        plot(ax2, AgentPDT.x_hat{i}(1, 1:mytStepFinal), AgentPDT.x_hat{i}(2, 1:mytStepFinal), ...
+        plot(ax2, AgentPDT1.x_hat{i}(1, 1:mytStepFinal), AgentPDT1.x_hat{i}(2, 1:mytStepFinal), ...
             'LineWidth', 1, ...
             'Color', targetColors(i, :),...
             'LineStyle'  ,  '--', ...
             'DisplayName', ['$$\mbox{\boldmath$\hat{x}$}_' num2str(i) '(t)$$']);
     end
 
-    % Plotting actual target positions
+    % First, plot all starting positions (column 1 of legend)
+    for i = 1:qtyTargets
+        plot(ax2, AgentPDT1.x_hat{i}(1, 1), AgentPDT1.x_hat{i}(2, 1), 'o', ...
+            'MarkerSize', 6, ...
+            'MarkerEdgeColor', targetColors(i, :), ...
+            'MarkerFaceColor', 'none', ...
+            'LineWidth', 1.5, ...
+            'DisplayName', ['$$\mbox{\boldmath$\hat{x}$}_' num2str(i) '(0)$$']);
+    end
+    
+
+    
+    % Third, plot all actual target positions (column 3 of legend)
     for i = 1:qtyTargets
         xT = Targets(1, i);
         yT = Targets(2, i);
-        plot(ax2, xT, yT, 'k+', ...
+        plot(ax2, xT, yT, '+', ...
             'Color', targetColors(i, :),...
             'LineWidth', 1, ...
             'MarkerSize', 7, ...
@@ -191,14 +288,15 @@ t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
         
     % ==== Axis properties ====
     axis(ax2, 'equal');
+    box(ax2, 'on');
     title(ax2, '(b) Estimate Trajectories', 'Interpreter','latex')
     xlabel(ax2, 'x (m)', 'Interpreter','latex')
     ylabel(ax2, 'y (m)', 'Interpreter','latex')
     grid(ax2, 'on');
     set(ax2, 'FontSize', 10);
     xlim(ax2, [-6 11]);
-    ylim(ax2, [-6 9]);
-    legend(ax2, 'Interpreter','latex', 'Location','best');
+    ylim(ax2, [-6 14]);
+    legend(ax2, 'Interpreter','latex', 'Location','best', 'NumColumns', 3);
     hold(ax2, 'off');
 
 %  ---- (c) Tracking Error Plot -----
@@ -207,20 +305,40 @@ t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
     hold(ax3, 'on');
     
     % Plotting PDT Agent Tracking Error
-    plot(ax3, t_vec, real(AgentPDT.delta_traj(1:mytStepFinal)),...
-        'DisplayName', '$$\delta(t)$$', ...
+    plot(ax3, t_vec, real(AgentPDT1.delta_traj(1:mytStepFinal)),...
+        'DisplayName', '$$\delta(t)$$ [Sinusoidal]', ...
         'LineWidth', 1, ...
-        'Color'      ,  'k');
-        
+        'Color'      ,  [0, 0.5, 0]);
+    hold on
+    plot(ax3, t_vec, real(AgentPDT2.delta_traj(1:mytStepFinal)),...
+        'DisplayName', '$$\delta(t)$$ [Min. Circle]', ...
+        'LineWidth', 1, ...
+        'Color'      ,  'r');
+    hold on
+    plot(ax3, t_vec, real(AgentPDT3.delta_traj(1:mytStepFinal)),...
+        'DisplayName', '$$\delta(t)$$ [Approx. Min. Ellipse]', ...
+        'LineWidth', 1, ...
+        'Color'      ,  'b');
+    
+    % --- Add Vertical Line for Tracking Convergence (Tc1 + Tc2) ---
+    if exist('Tc1', 'var') && exist('Tc2', 'var')
+        xline(ax3, Tc1 + Tc2, '-.', {'$T_{c,1} + T_{c,2}$'}, ...
+            'Interpreter', 'latex', ...
+            'FontSize', 10, ...
+            'LabelVerticalAlignment', 'bottom', ...
+            'HandleVisibility', 'off'); 
+    end
+
     % --- Axis Properties ---
     xlim(ax3, [0, tFinal])
+    box(ax3, 'on'); % <--- ADDED THIS to close the box
     title(ax3, '(c) Tracking Errors', 'Interpreter','latex')
     xlabel(ax3, 'time (sec)', 'Interpreter','latex')
     ylabel(ax3, 'Errors (m)', 'Interpreter','latex')
     grid(ax3, 'on');
     set(ax3, 'FontSize', 10);
     legend(ax3, 'Interpreter','latex', 'Location','best');
-    pbaspect(ax3, [2 1 1]); % You can still control aspect ratio
+    pbaspect(ax3, [2 1 1]); 
     hold(ax3, 'off');
 
 % ------ (d) Estimation Error Plot ---------
@@ -231,7 +349,7 @@ t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
     % Plotting Estimation Errors
     for i = 1:qtyTargets
         % Calculate the norm (magnitude) of the error vector
-        err_norm_i = vecnorm(AgentPDT.x_tilde_traj{i}(:, 1:mytStepFinal));
+        err_norm_i = vecnorm(AgentPDT1.x_tilde_traj{i}(:, 1:mytStepFinal));
         
         % Plotting norm against t_vec
         plot(ax4, t_vec, err_norm_i, ...
@@ -240,21 +358,34 @@ t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
             'Color', targetColors(i, :),...
             'DisplayName', ['$$\|\mbox{\boldmath$\tilde{x}$}_' num2str(i) '(t)\|$$']);
     end
+    % --- Add Vertical Line for Estimation Convergence (Tc1) ---
+    if exist('Tc1', 'var')
+        xline(ax4, Tc1, '-.', {'$T_{c,1}$'}, ...
+            'Interpreter', 'latex', ...
+            'FontSize', 10, ...
+            'LabelVerticalAlignment', 'bottom', ...
+            'HandleVisibility', 'off'); 
+    end
 
     % --- Axis Properties ---
     xlim(ax4, [0, tFinal])
+    box(ax4, 'on'); % <--- ADDED THIS to close the box
     title(ax4, '(d) Estimation Errors', 'Interpreter','latex')
     xlabel(ax4, 'time (sec)', 'Interpreter','latex')
     ylabel(ax4, 'Errors (m)', 'Interpreter','latex')
     grid(ax4, 'on');
     set(ax4, 'FontSize', 10);
     legend(ax4, 'Interpreter','latex', 'Location','best');
-    pbaspect(ax4, [2 1 1]); % You can still control aspect ratio
+    pbaspect(ax4, [2 1 1]); 
     hold(ax4, 'off');
 
 % --- Final layout adjustments for the whole figure ---
 t.TileSpacing = 'compact';
 t.Padding = 'compact';
+
+
+
+
 % sig function used for algorithms in Sui et al. (2025)
 function out = sig(z,alpha)
     out = zeros(length(z),1);

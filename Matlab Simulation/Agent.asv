@@ -195,13 +195,13 @@ classdef Agent
 
             % Bearings to centroid
 
-            avg_vector = mean(varphi_matrix, 2);
+            avg_vector = (max(varphi_matrix) - min(varphi_matrix);
             obj.psi = avg_vector / norm(avg_vector);
 
             obj.bar_psi = [ cos(pi/2), sin(pi/2);
                             -sin(pi/2), cos(pi/2)] * obj.psi;
             
-            obj.delta_traj(t) = norm(obj.c - obj.p) - obj.d_des;
+            obj.delta_traj(t) = norm(obj.c_hat - obj.p) - obj.d_des;
         end
 
 
@@ -212,14 +212,19 @@ classdef Agent
             latest_x_hats = zeros(2, numTargets);
             
             for i = 1:numTargets
+
+                % Estimate each target
                 if t*dT < Tc1
-                    % --- FULL ESTIMATION LOGIC (Your current code) ---
                     if t <= 2
                         obj.x_hat_dot{i}(:, t) = zeros(2, 1);
                     else
                         % Finding x_hat_dot
                         xi = inv(obj.P{i}{t}) * (obj.P{i}{t} * obj.x_hat{i}(:, t) - obj.q{i}{t});
-                        % ... (rest of your xi/Psi_a logic)
+                        if norm(xi) == 0
+                            Psi_a = zeros(2, 1);
+                        else
+                            Psi_a = xi ./ (norm(xi) ^ obj.alpha_1);
+                        end
                         obj.x_hat_dot{i}(:, t) = -1 / (obj.Tc1 * obj.alpha_1) * exp(norm(xi) ^ obj.alpha_1) * Psi_a;
                     end
                     % Updating kreisselmeier's regressor
@@ -227,20 +232,20 @@ classdef Agent
                     q_dot = -obj.q{i}{t} + obj.bar_varphi{i} * obj.bar_varphi{i}.' * obj.p;
                     obj.P{i}{t+1} = obj.P{i}{t} + P_dot * dT;
                     obj.q{i}{t+1} = obj.q{i}{t} + q_dot * dT;
-                    % --- END FULL ESTIMATION ---
+
+                % Just continue propogating values if past Tc1
                 else
-                    % --- PROPAGATION-ONLY LOGIC (if targets are static) ---
                     obj.x_hat_dot{i}(:, t) = zeros(2, 1); % Assume static target
                     obj.P{i}{t+1} = obj.P{i}{t};         % Propagate P
                     obj.q{i}{t+1} = obj.q{i}{t};         % Propagate q
                 end
 
-                % --- PROPAGATION (ALWAYS RUNS) ---
-                % This is the part that fixes the break
                 if t + 1 <= size(obj.x_hat{i}, 2)
                     obj.x_hat{i}(:, t+1) = obj.x_hat{i}(:, t) + obj.x_hat_dot{i}(:, t) * dT;
                 end
                 latest_x_hats(:, i) = obj.x_hat{i}(:, t);
+                obj.x_tilde_traj{i}(:, t) = obj.x_hat{i}(:, t) - targets(:, i);
+
             end
             
             % This must also always run, as updateDesiredDistance depends on it
@@ -269,7 +274,42 @@ classdef Agent
             obj.p_traj(:, t) = obj.p;
         end
 
+% Moving agent with non-holonomic constraints
+        % Using the control input projection method from Zhao et al. (2019)
+        % To control a planar unicycle model
+        function obj = moveNonHolonomic(obj, dT, t)
+            
+            % Heading vectors
+            h_i = [cos(obj.heading); sin(obj.heading)];
+            h_perp = [-sin(obj.heading); cos(obj.heading)];
 
+            % Defining f_i parameter
+            f_i = obj.u;
+            f_perp = f_i - (h_i' * f_i) * h_i; % perpendicular component of f_i
+            
+            % Calculating velocity and rotation rate inputs
+            v = h_i' * f_i;
+            heading_dot = h_perp' * f_perp;
+           
+            % Updating non-holonomic model
+            x_dot = v * cos(obj.heading);
+            y_dot = v * sin(obj.heading);
+            theta_dot = heading_dot;
+            
+            % Store velocity
+            obj.p_dot = [x_dot; y_dot];
+            
+            % Integration to find new agent pose
+            obj.p(1) = obj.p(1) + x_dot * dT;
+            obj.p(2) = obj.p(2) + y_dot * dT;
+            obj.heading = obj.heading + theta_dot * dT;
+            
+            % Normalize heading to [-pi, pi]
+            obj.heading = atan2(sin(obj.heading), cos(obj.heading));
+            
+            % Store trajectories
+            obj.p_traj(:, t) = obj.p;
+        end
         
     end
 end
