@@ -7,6 +7,7 @@ classdef Agent
             p                   % 2x1 vector: current agent position [x; y]
             p_dot               % 2x1 vector: current agent velocity [vx; vy]
             p_traj              % 2xT matrix: agent position history over time
+            u_traj
             heading             % Scalar: agent heading angle (rad)
     
         % ---- Target-related measurements ----
@@ -14,8 +15,8 @@ classdef Agent
             varphi              % 1xN cell: each cell contains 2x1 vector of bearing components to target
             bar_varphi          % 1xN cell: each cell contains 2x1 vector of bearing components perpendicular to target
             varphi_traj         % 1xN cell: each cell contains 2xT matrix of bearing components over time
-            psi                 % Scalar: current bearing angle to targets centroid (rad)
-            bar_psi             % Scalar: estimated bearing angle to targets centroid (rad)
+            psi_hat                 % Scalar: current bearing angle to targets centroid (rad)
+            bar_psi_hat             % Scalar: estimated bearing angle to targets centroid (rad)
             projPoint           % 2x1 vector: coordinates of current projection point
     
         % ---- Target state estimators ----
@@ -45,6 +46,7 @@ classdef Agent
             alpha_2             % Scalar: control parameter for bearing error dynamics
             Tc1                 % Scalar: control time constant
             Tc2                 % Scalar: control time constant
+            controller_frequency
     
         % ---- Logging / diagnostics ----
             delta_traj          % 1xT vector: history of bearing angle offsets
@@ -56,16 +58,21 @@ classdef Agent
             d_hat_dot           % 1xN vector: time derivatives of estimated distances
             theta_traj
             theta
+            integral
+            integralss
+            curr_control_time
             
         % ---- Trajectory type for delta calculation ----
             trajectory_type     % String: 'hull', 'circle', or 'ellipse'
+            velocity_saturation
+            latency
 
     end
 
     methods
 
         % Initialisation of agent
-        function obj = Agent(p_0, x_hat_0_cell, k_omega, Tc1, Tc2, alpha_1, alpha_2, d_des_function_handle, tSteps, numTargets, targets, heading)
+        function obj = Agent(p_0, x_hat_0_cell, k_omega, Tc1, Tc2, alpha_1, alpha_2, d_des_function_handle, tSteps, numTargets, targets, heading, velocity_saturation, latency)
            
             % Initial agent state
             obj.p = p_0;                                 % Initial position (2x1)
@@ -81,15 +88,19 @@ classdef Agent
             obj.alpha_2 = alpha_2;                       % Control gain α₂
             obj.d_des_func = d_des_function_handle;
             obj.d_des = 2;
-            obj.d_des_dot = 0;
+            obj.d_des_dot = zeros(1, tSteps);
             obj.d_des_traj = zeros(1, tSteps);
             obj.theta_traj = zeros(1, tSteps);
-            
+            obj.integral = zeros(1, tSteps);
+            obj.integralss = zeros(1, tSteps);
+            obj.velocity_saturation = velocity_saturation;
+            obj.latency = latency;
         
             % Distance measurements
             obj.d = cell(1, tSteps);                     % True distances to each target
             obj.d_tilde = 0;                             % Distance error
             obj.c = mean(targets, 2);
+            obj.curr_control_time = 0;
         
             % Bearing vectors
             obj.varphi = cell(1, numTargets);            % Bearing vector to target
@@ -103,8 +114,8 @@ classdef Agent
             obj.d_hat_dot = zeros(1, numTargets);        % Estimated distance rate
         
             % Projection and auxiliary variables
-            obj.psi = zeros(2, 1);                       % Auxiliary vector ψ
-            obj.bar_psi = zeros(2, 1);                   % Estimated ψ
+            obj.psi_hat = zeros(2, 1);                       % Auxiliary vector ψ
+            obj.bar_psi_hat = zeros(2, 1);                   % Estimated ψ
             obj.projPoint = zeros(2, 1);                 % Projection point on hull
         
             % Estimation parameters
@@ -145,6 +156,7 @@ classdef Agent
         end
 
 
+
         function obj = updateDesiredDistance(obj, cur_tStep, dT)
             t = cur_tStep;
             current_time = t * dT;
@@ -166,13 +178,12 @@ classdef Agent
             
             obj.d_des_traj(t) = obj.d_des;
             if t > 1
-                obj.d_des_dot = (obj.d_des_traj(t) - obj.d_des_traj(t-1)) / dT;
+                obj.d_des_dot(t) = (obj.d_des_traj(t) - obj.d_des_traj(t-1)) / dT;
             else
-                obj.d_des_dot = 0;
+                obj.d_des_dot(t) = 0;
             end
         end
 
-        % Getting bearing measurement to each target
         % Getting bearing measurement to each target
         function obj = getBearings(obj, cur_tStep, targets)
             t = cur_tStep;
@@ -193,9 +204,9 @@ classdef Agent
                                     -sin(pi/2), cos(pi/2)] * obj.varphi{i};
             end
             % Bearings to centroid (This is the "average phi" method, not bisector)
-            obj.psi = (obj.c - obj.p) / norm((obj.c - obj.p));
-            obj.bar_psi = [ cos(pi/2), sin(pi/2);
-                            -sin(pi/2), cos(pi/2)] * obj.psi;
+            obj.psi_hat = (obj.c_hat - obj.p) / norm((obj.c_hat - obj.p));
+            obj.bar_psi_hat = [ cos(pi/2), sin(pi/2);
+                            -sin(pi/2), cos(pi/2)] * obj.psi_hat;
             
             obj.delta_traj(t) = norm(obj.c_hat - obj.p) - obj.d_des;
             
@@ -228,6 +239,68 @@ classdef Agent
         end
 
 
+        function obj = getBearingsWithNoise(obj, cur_tStep, targets)
+            t = cur_tStep;
+            numTargets = size(targets, 2);
+
+            varphi_matrix = zeros(2, numTargets);
+            % Bearings to each target
+            for i = 1:numTargets
+                % Only using distance to target for plotting and to
+                % calculate bearing, not actually used by agent algorithms
+                target_pos = targets(:, i);  
+
+                sigma = deg2rad(0.5);
+
+                v = (target_pos - obj.p);
+                v = v / norm(v);
+                
+                theta = atan2(v(2), v(1));
+                theta = theta + sigma * randn;
+                
+                obj.varphi{i} = [cos(theta); sin(theta)];
+                varphi_matrix(:, i) = obj.varphi{i};
+                % Finding bar_varphi, the rotated pi/2 vector of varphi
+                obj.bar_varphi{i} = [ cos(pi/2), sin(pi/2);
+                                    -sin(pi/2), cos(pi/2)] * obj.varphi{i};
+            end
+            % Bearings to centroid (This is the "average phi" method, not bisector)
+            obj.psi_hat = (obj.c_hat - obj.p) / norm((obj.c_hat - obj.p));
+            obj.bar_psi_hat = [ cos(pi/2), sin(pi/2);
+                            -sin(pi/2), cos(pi/2)] * obj.psi_hat;
+            
+            obj.delta_traj(t) = norm(obj.c_hat - obj.p) - obj.d_des;
+            
+            % --- CORRECTED LOCALIZATION HEADING ---
+            if obj.localization_heading == zeros(2,1)
+                % 1. Get all angles
+                angles = atan2(varphi_matrix(2, :), varphi_matrix(1, :));
+            
+                % 2. Find min and max angles
+                min_angle = min(angles);
+                max_angle = max(angles);
+                
+                % 3. Find the bisecting angle
+                bisect_angle = (min_angle + max_angle) / 2;
+                
+                % 4. Handle the wrap-around case (if arc is > 180 deg)
+                if (max_angle - min_angle) > pi
+                    bisect_angle = bisect_angle + pi;
+                end
+                
+                % 5. Calculate the PERPENDICULAR angle (add 90 degrees)
+                perp_angle = bisect_angle - (pi/2);
+                
+                % 6. Normalize angle to [-pi, pi]
+                perp_angle = wrapToPi(perp_angle);
+                
+                % 7. Convert this perpendicular angle into a 2x1 unit vector
+                obj.localization_heading = [cos(perp_angle); sin(perp_angle)];
+            end
+        end
+
+
+
         % Individual target estimator from Sui et al. (2025)
         function obj = estimateTargetPDT(obj, cur_tStep, dT, targets, Tc1)
             t = cur_tStep;
@@ -248,7 +321,7 @@ classdef Agent
                         else
                             Psi_a = xi ./ (norm(xi) ^ obj.alpha_1);
                         end
-                        obj.x_hat_dot{i}(:, t) = -1 / (obj.Tc1 * obj.alpha_1) * exp(norm(xi) ^ obj.alpha_1) * Psi_a;
+                        obj.x_hat_dot{i}(:, t) = -1 / (Tc1 * obj.alpha_1) * exp(norm(xi) ^ obj.alpha_1) * Psi_a;
                     end
                     % Updating kreisselmeier's regressor
                     P_dot = -obj.P{i}{t} + obj.bar_varphi{i} * obj.bar_varphi{i}.';
@@ -275,29 +348,118 @@ classdef Agent
             obj.c_hat = mean(latest_x_hats, 2);
         end
 
+        function obj = estimateTargetPDTIndefinite(obj, cur_tStep, dT, targets, Tc1)
+            t = cur_tStep;
+            numTargets = size(targets, 2);
+            latest_x_hats = zeros(2, numTargets);
+            
+            for i = 1:numTargets
+
+            % Estimate each target
+                if t <= 2
+                    obj.x_hat_dot{i}(:, t) = zeros(2, 1);
+                else
+                    % Finding x_hat_dot
+                    xi = inv(obj.P{i}{t}) * (obj.P{i}{t} * obj.x_hat{i}(:, t) - obj.q{i}{t});
+                    if norm(xi) == 0
+                        Psi_a = zeros(2, 1);
+                    else
+                        Psi_a = xi ./ (norm(xi) ^ obj.alpha_1);
+                    end
+                    obj.x_hat_dot{i}(:, t) = -1 / (Tc1 * obj.alpha_1) * exp(norm(xi) ^ obj.alpha_1) * Psi_a;
+                end
+                % Updating kreisselmeier's regressor
+                P_dot = -obj.P{i}{t} + obj.bar_varphi{i} * obj.bar_varphi{i}.';
+                q_dot = -obj.q{i}{t} + obj.bar_varphi{i} * obj.bar_varphi{i}.' * obj.p;
+                obj.P{i}{t+1} = obj.P{i}{t} + P_dot * dT;
+                obj.q{i}{t+1} = obj.q{i}{t} + q_dot * dT;
+
+
+                if t + 1 <= size(obj.x_hat{i}, 2)
+                    obj.x_hat{i}(:, t+1) = obj.x_hat{i}(:, t) + obj.x_hat_dot{i}(:, t) * dT;
+                end
+                latest_x_hats(:, i) = obj.x_hat{i}(:, t);
+                obj.x_tilde_traj{i}(:, t) = obj.x_hat{i}(:, t) - targets(:, i);
+
+            end
+            
+            % This must also always run, as updateDesiredDistance depends on it
+            obj.c_hat = mean(latest_x_hats, 2);
+        end
+
         % Calculating Control input for controller inspired by Sui et al. (2025)
-        function obj = controlInputPDT(obj, t, Tc1, dT)
+        function obj = controlInputPDT(obj, t, Tc1, Tc2, dT)
 
             % Error in distance to shape
-            obj.d_tilde = norm(obj.c - obj.p) - obj.d_des;
+            obj.d_tilde = norm(obj.c_hat - obj.p) - obj.d_des;
+            
+            
+            if (t*dT > Tc1 + Tc2)
+                obj.integral(t+1) = obj.integral(t) + obj.d_tilde* dT;
+            else
+                obj.integral(t+1) = obj.integral(t);
+            end
+
+            
+
+            obj.integralss(t+1) = (obj.d_des - sqrt((obj.d_des + obj.d_des_dot(t)*dT)^2 - (obj.k_omega * dT)^2)) / dT;
 
             if t*dT < Tc1
                 obj.u = obj.k_omega  * obj.localization_heading;
             else
-                v_cen = 1/(obj.alpha_2 * obj.Tc2) * exp(abs(obj.d_tilde) ^ obj.alpha_2) * sig(obj.d_tilde, 1 - obj.alpha_2) - obj.d_des_dot;
-                obj.u = v_cen * obj.psi + obj.k_omega  * obj.bar_psi;
+                % with integral
+                %v_cen = 1/(obj.alpha_2 * obj.Tc2) * exp(abs(obj.d_tilde) ^ obj.alpha_2) * sig(obj.d_tilde, 1 - obj.alpha_2) + obj.integral(t+1) - obj.d_des_dot(t);
+
+                % without integral
+                v_cen = 1/(obj.alpha_2 * obj.Tc2) * exp(abs(obj.d_tilde) ^ obj.alpha_2) * sig(obj.d_tilde, 1 - obj.alpha_2) - obj.d_des_dot(t);
+                
+
+                % MD with integral
+                %v_cen = obj.d_tilde + obj.integral(t+1);
+
+                %v_cen = max(min(1.5, v_cen), -1.5);
+                obj.u = v_cen * obj.psi_hat + obj.k_omega  * obj.bar_psi_hat;
+
             end
+
+            if norm(obj.u) > obj.velocity_saturation
+                obj.u = obj.velocity_saturation * obj.u / norm(obj.u);
+            end
+            obj.u_traj(:, t) = obj.u;
+        end
+
+        % Calculating Control input for controller inspired by Sui et al. (2025)
+        function obj = controlInputPDTUpdated(obj, t, Tc1, Tc2, dT)
+
+            % Error in distance to shape
+            obj.d_tilde = norm(obj.c_hat - obj.p) - obj.d_des;
             
+            
+            if t*dT < Tc1
+                obj.u = 4  * obj.localization_heading;
+            else
+               
+                v_cen = 1/(obj.alpha_2 * obj.Tc2) * exp(abs(obj.d_tilde) ^ obj.alpha_2) * sig(obj.d_tilde, 1 - obj.alpha_2) - obj.d_des_dot(t);
+                
+                obj.u = v_cen * obj.psi_hat + obj.k_omega  * obj.bar_psi_hat;
+
+            end
+
+            obj.u_traj(:, t) = obj.u;
         end
 
         % Moving agent with holonomic agent constraints
         function obj = move(obj, dT, t)
-            obj.p_dot = obj.u;
+            if t*dT >= obj.Tc1
+                obj.p_dot = obj.u_traj(:, t - obj.latency/dT);
+            else
+                obj.p_dot = obj.u;
+            end
             obj.p = obj.p + obj.p_dot * dT;
             obj.p_traj(:, t) = obj.p;
         end
 
-% Moving agent with non-holonomic constraints
+        % Moving agent with non-holonomic constraints
         % Using the control input projection method from Zhao et al. (2019)
         % To control a planar unicycle model
         function obj = moveNonHolonomic(obj, dT, t)

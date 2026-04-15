@@ -72,3 +72,4 @@ function [center, semi_axes, rotation_matrix] = minEnclosingEllipseStat(points)
     rotation_matrix = rotation_matrix(:, sort_idx);
 
 end
+

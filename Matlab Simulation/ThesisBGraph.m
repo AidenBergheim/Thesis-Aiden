@@ -18,7 +18,7 @@ clc
 
     tBegin = 0;             % (seconds)
     tFinal = 42;            % (seconds)
-    dT     = 0.01;         % (seconds)
+    dT     = 0.001;         % (seconds)
     
     tSteps = (tFinal-tBegin)/dT;   % force tSteps to be an integer
 
@@ -40,6 +40,9 @@ clc
     
         p_0             = [8; 0];      % initial location of the agent 
        
+        %x_hat_0         = [-4, 1, 0, 3; 
+        %                   3, 3, 4, -2];
+
         x_hat_0         = [7.7, 7.812, 7.7, 7.703; 
                            0, 0.234, 0, 0.042];   % agent's initial guess of target positions
 
@@ -52,7 +55,7 @@ clc
        
         % PDT algorthm parameters
             alpha_1 = 0.5;
-            alpha_2 = 0.8;
+            alpha_2 = 0.5;
             Tc1 = 1;
             Tc2 = 1;
 
@@ -76,13 +79,13 @@ clc
     
     % Agent utilizing controller and localization from Sui et al. (2025)
     AgentPDT1 = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
-                        alpha_1, alpha_2, d_des_handle1, tSteps, qtyTargets, Targets, initial_heading);
+                        alpha_1, alpha_2, d_des_handle1, tSteps, qtyTargets, Targets, initial_heading, 10, 0);
 
     AgentPDT2 = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
-                        alpha_1, alpha_2, d_des_handle2, tSteps, qtyTargets, Targets, initial_heading);
+                        alpha_1, alpha_2, d_des_handle2, tSteps, qtyTargets, Targets, initial_heading, 10, 0);
 
     AgentPDT3 = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
-                        alpha_1, alpha_2, d_des_handle3, tSteps, qtyTargets, Targets, initial_heading);
+                        alpha_1, alpha_2, d_des_handle3, tSteps, qtyTargets, Targets, initial_heading, 10, 0);
 
 
     % For theoretical experimentation
@@ -119,19 +122,19 @@ for t = 1:tSteps
     AgentPDT1 = AgentPDT1.updateDesiredDistance(t, dT);
     AgentPDT1 = AgentPDT1.getBearings(t, Targets);                    % --- Take bearing measurements
     AgentPDT1 = AgentPDT1.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
-    AgentPDT1 = AgentPDT1.controlInputPDT(t, Tc1, dT);                % --- Run control law
+    AgentPDT1 = AgentPDT1.controlInputPDT(t, Tc1, Tc2, dT);                % --- Run control law
     AgentPDT1 = AgentPDT1.move(dT, t);                                % --- Execute control law
 
     AgentPDT2 = AgentPDT2.updateDesiredDistance(t, dT);
     AgentPDT2 = AgentPDT2.getBearings(t, Targets);                    % --- Take bearing measurements
     AgentPDT2 = AgentPDT2.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
-    AgentPDT2 = AgentPDT2.controlInputPDT(t, Tc1, dT);                % --- Run control law
+    AgentPDT2 = AgentPDT2.controlInputPDT(t, Tc1, Tc2, dT);                % --- Run control law
     AgentPDT2 = AgentPDT2.move(dT, t);                                % --- Execute control law
 
     AgentPDT3 = AgentPDT3.updateDesiredDistance(t, dT);
     AgentPDT3 = AgentPDT3.getBearings(t, Targets);                    % --- Take bearing measurements
     AgentPDT3 = AgentPDT3.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
-    AgentPDT3 = AgentPDT3.controlInputPDT(t, Tc1, dT);                % --- Run control law
+    AgentPDT3 = AgentPDT3.controlInputPDT(t, Tc1, Tc2, dT);                % --- Run control law
     AgentPDT3 = AgentPDT3.move(dT, t);                                % --- Execute control law
 
 end
@@ -143,7 +146,7 @@ end
 mytStepFinal = max(1, min(round(tFinal/dT), tSteps)); % ensure integer index
 targetColors = lines(qtyTargets); 
 t_vec = (0:mytStepFinal-1) * dT; % Create a time vector
-figure; % Create a new figure
+figure('Position', [50 100 1100 420]); % Create a new figure
 t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
 
 %  ---- (a) Agent Trajectory plot -----
@@ -246,7 +249,7 @@ stack_right = [h_paths(1:3)];
 % Combine them
 legend_handles = [stack_right; stack_middle; stack_left];
 
-legend(ax1, legend_handles, 'Interpreter','latex', 'Location','best', 'NumColumns', 2);
+legend(ax1, legend_handles, 'Interpreter','latex', 'Location','north', 'NumColumns', 2);
 hold(ax1, 'off');
 
 % ------- (b) Estimate Trajectories plot --------
@@ -296,7 +299,7 @@ hold(ax1, 'off');
     set(ax2, 'FontSize', 10);
     xlim(ax2, [-6 11]);
     ylim(ax2, [-6 14]);
-    legend(ax2, 'Interpreter','latex', 'Location','best', 'NumColumns', 3);
+    legend(ax2, 'Interpreter','latex', 'Location','north', 'NumColumns', 3);
     hold(ax2, 'off');
 
 %  ---- (c) Tracking Error Plot -----
@@ -337,11 +340,12 @@ hold(ax1, 'off');
     ylabel(ax3, 'Errors (m)', 'Interpreter','latex')
     grid(ax3, 'on');
     set(ax3, 'FontSize', 10);
-    legend(ax3, 'Interpreter','latex', 'Location','best');
+    legend(ax3, 'Interpreter','latex', 'Location','northeast');
     pbaspect(ax3, [2 1 1]); 
     hold(ax3, 'off');
 
-% ------ (d) Estimation Error Plot ---------
+
+% ------ (c) Estimation Error Plot ---------
     % This plot is in column 3, bottom row (tile 6)
     ax4 = nexttile(6); 
     hold(ax4, 'on');
@@ -352,7 +356,7 @@ hold(ax1, 'off');
         err_norm_i = vecnorm(AgentPDT1.x_tilde_traj{i}(:, 1:mytStepFinal));
         
         % Plotting norm against t_vec
-        plot(ax4, t_vec, err_norm_i, ...
+        semilogx(ax4, (1:mytStepFinal) * dT, err_norm_i, ...
             'LineWidth', 1.3, ...
             'LineStyle', '--', ...
             'Color', targetColors(i, :),...
@@ -369,21 +373,22 @@ hold(ax1, 'off');
 
     % --- Axis Properties ---
     xlim(ax4, [0, tFinal])
+    ylim([0 10])
     box(ax4, 'on'); % <--- ADDED THIS to close the box
     title(ax4, '(d) Estimation Errors', 'Interpreter','latex')
     xlabel(ax4, 'time (sec)', 'Interpreter','latex')
     ylabel(ax4, 'Errors (m)', 'Interpreter','latex')
     grid(ax4, 'on');
     set(ax4, 'FontSize', 10);
-    legend(ax4, 'Interpreter','latex', 'Location','best');
+    legend(ax4, 'Interpreter','latex', 'Location','northeast');
     pbaspect(ax4, [2 1 1]); 
+    set(ax4, 'XScale', 'log')
     hold(ax4, 'off');
+
 
 % --- Final layout adjustments for the whole figure ---
 t.TileSpacing = 'compact';
 t.Padding = 'compact';
-
-
 
 
 % sig function used for algorithms in Sui et al. (2025)

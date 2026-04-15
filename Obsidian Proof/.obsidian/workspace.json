@@ -15,16 +15,29 @@
               "state": {
                 "file": "Proof Mind Map/Proof Mind Map.canvas",
                 "viewState": {
-                  "x": 4019.7885094396324,
+                  "x": 3654.412113780999,
                   "y": -1375.718621184872,
-                  "zoom": 0.4291869088484157
+                  "zoom": 0.20338469496766481
                 }
               },
               "icon": "lucide-layout-dashboard",
               "title": "Proof Mind Map"
             }
+          },
+          {
+            "id": "f9303fef3f36d865",
+            "type": "leaf",
+            "state": {
+              "type": "release-notes",
+              "state": {
+                "currentVersion": "1.11.7"
+              },
+              "icon": "lucide-book-up",
+              "title": "Release Notes 1.11.7"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -81,8 +94,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "a2f583817b864e24",
@@ -173,7 +185,7 @@
       "bases:Create new base": false
     }
   },
-  "active": "8552aa40cd637385",
+  "active": "4a995400ca6be914",
   "lastOpenFiles": [
     "Proof Mind Map/Proof Mind Map OLD.canvas",
     "Proof Mind Map/Proof Mind Map.md",

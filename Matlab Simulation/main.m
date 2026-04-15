@@ -17,8 +17,10 @@ clc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     tBegin = 0;             % (seconds)
-    tFinal = 38;            % (seconds)
-    dT     = 0.002;         % (seconds)
+    tFinal = 60;            % (seconds)
+    frequency = 60;
+    dT     = 1 / frequency;         % (seconds)
+    latency = 0;              % (seconds)
     
     tSteps = (tFinal-tBegin)/dT;   % force tSteps to be an integer
 
@@ -26,8 +28,8 @@ clc
     %        Define Multiple Targets
     % ----------------------------------------
     
-    Targets       = [-2, 4, 2, 1; 
-                     0, 5, 0, 1];    % initial location of the target 
+    Targets       = [0.5, 0.2, 0.6; 
+                     -0.5, 0.6, 0];    % initial location of the target 
     
     qtyTargets = size(Targets, 2);
     
@@ -38,36 +40,35 @@ clc
     
     % ---- Initial Conditions ----
     
-        p_0             = [8; 0];      % initial location of the agent 
-       
-        x_hat_0         = [7.7, 7.812, 7.7, 7.703; 
-                           0, 0.234, 0, 0.042];   % agent's initial guess of target positions
+        p_0             = [1.44639504; -1.416090488];      % initial location of the agent 
+       	
+
+        x_hat_0         = [1.0, 0.5, 0.4; 
+                           0, 0.234/4, 0];   % agent's initial guess of target positions
 
         
 
     % ---- Control Constants ----
     
         % control gain for adjusting tangential speed  
-            k_omega = 1;           
+            k_s = 0.2;           
        
         % PDT algorthm parameters
             alpha_1 = 0.5;
-            alpha_2 = 0.05;
-            Tc1 = 1;
-            Tc2 = 1;
-
-        % Cao algorithm parameters
-            alpha = 5;
+            alpha_2 = 0.5;
+            Tc1 = 2;
+            Tc2 = 4;
+            velocity_saturation = 100;
 
         % Non-holonomic parameters
             initial_heading = pi/2;
     
         % Desired Distance to Targets
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 1;
-        %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 5.7 + 0.2*sin(2.1*time);
+        d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 1.2 + 0.2*sin(time);
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeConvexHullRadius(theta, c_hat, x_hat_positions, y);
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinCircleRadius(theta, c_hat, x_hat_positions, y);
-        d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinEllipseRadius(theta, c_hat, x_hat_positions, y);
+        %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinEllipseRadius(theta, c_hat, x_hat_positions, y);
         
 
     % ----------------------------------------
@@ -75,47 +76,20 @@ clc
     % ----------------------------------------
     
     % Agent utilizing controller and localization from Sui et al. (2025)
-    AgentPDT = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
-                        alpha_1, alpha_2, d_des_handle, tSteps, qtyTargets, Targets, initial_heading);
-
-
-    % For theoretical experimentation
-            vectors_to_targets = Targets - p_0;
-            %    We use atan2(y, x) to get the angle in radians
-            all_bearing_angles = atan2(vectors_to_targets(2,:), vectors_to_targets(1,:));
-
-            max_distance_to_centroid = max(vecnorm(Targets - p_0));
-        
-            % 3. Find the max and min angles
-            max_phi = max(all_bearing_angles);
-            min_phi = min(all_bearing_angles);
-        
-            % 4. Define gamma as half the angular spread
-            gamma = (max_phi - min_phi) / 2;
-            rs = 0.1
-            % mind0 = (rs)/abs(cos(gamma)) + max_distance_to_centroid %Geometric definition
-            mind0 = min(rs/abs(cos(gamma)), k_omega*Tc1 + rs)
-
-            d0 = min(vecnorm(Targets - p_0));
-
-            if d0 > mind0
-                display("Hooray")
-            else
-                display("Oh no")
-            end
-
+    AgentPDT = Agent(p_0, x_hat_0, k_s, Tc1, Tc2, ...
+                        alpha_1, alpha_2, d_des_handle, tSteps, qtyTargets, Targets, initial_heading, velocity_saturation ,latency);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %              Main Loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+curr_time = 0;
 
 for t = 1:tSteps
     AgentPDT = AgentPDT.updateDesiredDistance(t, dT);
     AgentPDT = AgentPDT.getBearings(t, Targets);                    % --- Take bearing measurements
     AgentPDT = AgentPDT.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
-    AgentPDT = AgentPDT.controlInputPDT(t, Tc1, dT);                % --- Run control law
-    AgentPDT = AgentPDT.moveNonHolonomic(dT, t);                                % --- Execute control law
-
+    AgentPDT = AgentPDT.controlInputPDT(t, Tc1, Tc2, dT);                % --- Run control law
+    AgentPDT = AgentPDT.move(dT, t);                                % --- Execute control law
 end
 
 
@@ -159,8 +133,8 @@ t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
     ylabel(ax1, 'y (m)', 'Interpreter','latex')
     grid(ax1, 'on');
     set(ax1, 'FontSize', 10);
-    xlim(ax1, [-6 11]);
-    ylim(ax1, [-6 9]);
+    xlim(ax1, [-2 2]);
+    ylim(ax1, [-2 2]);
     legend(ax1, 'Interpreter','latex', 'Location','best');
     hold(ax1, 'off');
 
@@ -196,8 +170,8 @@ t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
     ylabel(ax2, 'y (m)', 'Interpreter','latex')
     grid(ax2, 'on');
     set(ax2, 'FontSize', 10);
-    xlim(ax2, [-6 11]);
-    ylim(ax2, [-6 9]);
+    xlim(ax2, [-2 2]);
+    ylim(ax2, [-2 2]);
     legend(ax2, 'Interpreter','latex', 'Location','best');
     hold(ax2, 'off');
 
@@ -211,6 +185,15 @@ t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
         'DisplayName', '$$\delta(t)$$', ...
         'LineWidth', 1, ...
         'Color'      ,  'k');
+    hold on;
+        % --- Add Vertical Line for Tracking Convergence (Tc1 + Tc2) ---
+    if exist('Tc1', 'var') && exist('Tc2', 'var')
+        xline(ax3, Tc1 + Tc2, '-.', {'$T_{c,1} + T_{c,2}$'}, ...
+            'Interpreter', 'latex', ...
+            'FontSize', 10, ...
+            'LabelVerticalAlignment', 'bottom', ...
+            'HandleVisibility', 'off'); 
+    end
         
     % --- Axis Properties ---
     xlim(ax3, [0, tFinal])
@@ -241,6 +224,15 @@ t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
             'DisplayName', ['$$\|\mbox{\boldmath$\tilde{x}$}_' num2str(i) '(t)\|$$']);
     end
 
+    hold on
+   % --- Add Vertical Line for Estimation Convergence (Tc1) ---
+    if exist('Tc1', 'var')
+        xline(ax4, Tc1, '-.', {'$T_{c,1}$'}, ...
+            'Interpreter', 'latex', ...
+            'FontSize', 10, ...
+            'LabelVerticalAlignment', 'bottom', ...
+            'HandleVisibility', 'off'); 
+    end
     % --- Axis Properties ---
     xlim(ax4, [0, tFinal])
     title(ax4, '(d) Estimation Errors', 'Interpreter','latex')
@@ -252,6 +244,20 @@ t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
     pbaspect(ax4, [2 1 1]); % You can still control aspect ratio
     hold(ax4, 'off');
 
+
+%figure(2)
+%    plot(t_vec, real(AgentPDT.integral(1:mytStepFinal)),...
+%        'DisplayName', '$$\zeta(t)$$', ...
+%        'LineWidth', 1, ...
+%        'Color'      ,  'b');
+%    hold on
+%    plot(t_vec, real(AgentPDT.integralss(1:mytStepFinal)),...
+%        'DisplayName', '$$\zeta_s(t)$$', ...
+%        'LineWidth', 1, ...
+%        'Color'      ,  'r');
+%    legend('Interpreter','latex', 'Location','best');
+%    grid on
+
 % --- Final layout adjustments for the whole figure ---
 t.TileSpacing = 'compact';
 t.Padding = 'compact';
@@ -259,101 +265,166 @@ t.Padding = 'compact';
 function out = sig(z,alpha)
     out = zeros(length(z),1);
     for i = 1:length(z)
-        out(i) = sign(z(i))*abs(z(i))^alpha;
+        out(i) = sinh(z(i))*abs(z(i))^alpha;
     end
 end
 
 
 function closest_point = closestPointOnConvexHullAtAngle(theta, c_hat, x_hat_positions, r_s)
-% Calculates the point on a "safe" path offset from the convex hull
-% of the targets, as seen from the centroid 'c_hat' at a given angle 'theta'.
-
-    % --- Step 1: Compute Convex Hull ---
-    % Ensure at least 3 unique points for convhull
     unique_pts = unique(x_hat_positions', 'rows');
+    ray_direction = [cos(theta); sin(theta)];
+    
     if size(unique_pts, 1) < 3
-        % Fallback for 1 or 2 points: just offset from centroid
-        ray_direction = [cos(theta); sin(theta)];
-        closest_point = c_hat + r_s * ray_direction;
+        max_proj = 0;
+        for j = 1:size(x_hat_positions, 2)
+            v = x_hat_positions(:, j) - c_hat;
+            proj = dot(v, ray_direction);
+            if proj > max_proj
+                max_proj = proj;
+            end
+        end
+        closest_point = c_hat + (max_proj + r_s) * ray_direction;
         return;
     end
     
     K = convhull(x_hat_positions(1,:), x_hat_positions(2,:));
-    hull_indices = K(1:end-1);  % Remove duplicate last point
+    hull_indices = K(1:end-1);
     hull_vertices = x_hat_positions(:, hull_indices);
     num_hull_vertices = size(hull_vertices, 2);
     
-    % --- Step 2: Find Ray-Hull Intersection ---
-    ray_direction = [cos(theta); sin(theta)];
-    
     max_distance = 0;
-    intersection_point = c_hat; 
-    best_edge = [0; 0]; % Store the edge vector of the correct intersection
+    best_edge = [0; 0];
+    found = false;
 
     for i = 1:num_hull_vertices
         v1 = hull_vertices(:, i);
         v2 = hull_vertices(:, mod(i, num_hull_vertices) + 1);
+        edge = v2 - v1;
         
-        % Edge vector (world coordinates)
-        edge = v2 - v1; 
-        
-        % Solve for intersection: c_hat + t*ray_direction = v1 + s*edge
-        % [ray_direction, -edge] * [t; s] = v1 - c_hat
-        A = [ray_direction, -edge];
+        A_mat = [ray_direction, -edge];
         b_vec = v1 - c_hat;
+        det_A = det(A_mat);
         
-        det_A = det(A);
-        
-        % Check if ray is parallel to edge
         if abs(det_A) > 1e-10
-            params = A \ b_vec;
-            t = params(1);  % Distance along ray from centroid
-            s = params(2);  % Position along edge (0 to 1)
+            params = A_mat \ b_vec;
+            t_param = params(1);
+            s = params(2);
             
-            % Check if intersection is valid (forward ray, on edge segment)
-            if t > 0 && s >= 0 && s <= 1
-                if t > max_distance
-                    max_distance = t;
-                    % This is the point on the hull boundary
-                    intersection_point = c_hat + t * ray_direction; 
-                    best_edge = edge; % Store this edge
+            if t_param > 0 && s >= -1e-10 && s <= 1+1e-10
+                if t_param > max_distance
+                    max_distance = t_param;
+                    best_edge = edge;
+                    found = true;
                 end
             end
         end
     end
     
-    % --- Step 3: Offset Intersection Point Perpendicularly ---
-    
-    if max_distance == 0
-        % No intersection found (e.g., c_hat is outside hull)
-        % Fallback: just offset along the ray
+    if ~found
         closest_point = c_hat + r_s * ray_direction;
         return;
     end
 
-    % Calculate the outward normal vector to the 'best_edge'
-    edge_dir = best_edge;
-    % Get the perpendicular vector (rotate 90 degrees)
-    normal = [edge_dir(2); -edge_dir(1)]; 
-    normal = normal / (norm(normal) + 1e-9); % Normalize
+    % Intersection point on the hull boundary
+    intersection_point = c_hat + max_distance * ray_direction;
     
-    % Ensure the normal points "outward" relative to the centroid
-    % (i.e., in the same general direction as the ray from the centroid)
+    % Outward normal to the edge
+    normal = [best_edge(2); -best_edge(1)];
+    normal = normal / (norm(normal) + 1e-9);
     if dot(normal, ray_direction) < 0
         normal = -normal;
     end
     
-    % Offset the intersection point outward by r_s in the *normal direction*
-    closest_point = intersection_point + r_s * normal;
+    % Offset perpendicular to edge, then project back onto the ray
+    % to get a consistent radial distance from centroid
+    offset_point = intersection_point + r_s * normal;
+    
+    % Project offset_point back onto the ray from c_hat
+    radial_dist = dot(offset_point - c_hat, ray_direction);
+    closest_point = c_hat + radial_dist * ray_direction;
 end
 
-
 function distance = computeConvexHullRadius(theta, c_hat, x_hat_positions, y)
-    r_s = 0.3;
-
-    closest_point = closestPointOnConvexHullAtAngle(theta, c_hat, x_hat_positions, r_s);
-
-    distance = norm(closest_point - c_hat);
+    r_s = 0.2;
+    ray_direction = [cos(theta); sin(theta)];
+    
+    unique_pts = unique(x_hat_positions', 'rows');
+    if size(unique_pts, 1) < 3
+        max_proj = 0;
+        for j = 1:size(x_hat_positions, 2)
+            v = x_hat_positions(:, j) - c_hat;
+            proj = dot(v, ray_direction);
+            if proj > max_proj
+                max_proj = proj;
+            end
+        end
+        distance = max_proj + r_s;
+        return;
+    end
+    
+    K = convhull(x_hat_positions(1,:), x_hat_positions(2,:));
+    hull_indices = K(1:end-1);
+    hull_vertices = x_hat_positions(:, hull_indices);
+    num_hull_vertices = size(hull_vertices, 2);
+    
+    max_dist = 0;
+    
+    % --- Offset edges: push each edge outward by r_s ---
+    for i = 1:num_hull_vertices
+        v1 = hull_vertices(:, i);
+        v2 = hull_vertices(:, mod(i, num_hull_vertices) + 1);
+        edge = v2 - v1;
+        edge_len = norm(edge);
+        if edge_len < 1e-12, continue; end
+        
+        normal = [edge(2); -edge(1)] / edge_len;
+        edge_mid = (v1 + v2) / 2;
+        if dot(normal, edge_mid - c_hat) < 0
+            normal = -normal;
+        end
+        
+        v1_off = v1 + r_s * normal;
+        v2_off = v2 + r_s * normal;
+        edge_off = v2_off - v1_off;
+        
+        A_mat = [ray_direction, -edge_off];
+        b_vec = v1_off - c_hat;
+        det_A = det(A_mat);
+        
+        if abs(det_A) > 1e-10
+            params = A_mat \ b_vec;
+            t_param = params(1);
+            s = params(2);
+            if t_param > 0 && s >= -1e-10 && s <= 1+1e-10
+                if t_param > max_dist
+                    max_dist = t_param;
+                end
+            end
+        end
+    end
+    
+    % --- Vertex arcs: circle of radius r_s at each vertex ---
+    for i = 1:num_hull_vertices
+        v = hull_vertices(:, i);
+        oc = c_hat - v;
+        b_coeff = 2 * dot(ray_direction, oc);
+        c_coeff = dot(oc, oc) - r_s^2;
+        discriminant = b_coeff^2 - 4*c_coeff;
+        
+        if discriminant >= 0
+            sqrt_disc = sqrt(discriminant);
+            t2 = (-b_coeff + sqrt_disc) / 2;  % far intersection only
+            if t2 > max_dist
+                max_dist = t2;
+            end
+        end
+    end
+    
+    if max_dist == 0
+        distance = r_s;
+    else
+        distance = max_dist;
+    end
 end
 
 function distance = computeMinCircleRadius(theta, c_hat, x_hat_positions, y)
@@ -429,5 +500,7 @@ function distance = computeMinEllipseRadius(theta, c_hat, x_hat_positions, y)
         distance = 1 / sqrt(denominator);
     end
 end
+
+
 
 

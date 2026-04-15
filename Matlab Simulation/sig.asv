@@ -1,0 +1,7 @@
+function out = sig(z,alpha)
+    len = length(z);
+    out = zeros(len,1);
+    for i = 1:len
+        out(i) = tanh(z(i))*abs(z(i))^alpha;
+    end
+end
