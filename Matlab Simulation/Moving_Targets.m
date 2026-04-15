@@ -82,6 +82,10 @@ clc
     Agent = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
                         alpha_1, alpha_2, d_des_handle1, tSteps, qtyTargets, Targets, initial_heading, 0.3, 0);
 
+    Agent2 = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
+                        alpha_1, alpha_2, d_des_handle1, tSteps, qtyTargets, Targets, initial_heading, 30, 0);
+
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %              Main Loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -92,6 +96,12 @@ for t = 1:tSteps
     Agent = Agent.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
     Agent = Agent.controlInputPDT(t, Tc1, Tc2, dT);                % --- Run control law
     Agent = Agent.move(dT, t);                                % --- Execute control law
+
+    Agent2 = Agent2.updateDesiredDistance(t, dT);
+    Agent2 = Agent2.getBearings(t, Targets);                    % --- Take bearing measurements
+    Agent2 = Agent2.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
+    Agent2 = Agent2.controlInputPDT(t, Tc1, Tc2, dT);                % --- Run control law
+    Agent2 = Agent2.move(dT, t);                                % --- Execute control law
 
 end
 
