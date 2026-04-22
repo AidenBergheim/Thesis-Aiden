@@ -86,6 +86,7 @@ t = tiledlayout(1, 2); % Create a 2-row, 3-column grid
     xlim(ax1, [-1 2.2]);
     ylim(ax1, [-1.5 1.5]);
     legend(ax1, 'Interpreter','latex', 'Location','best');
+    box(ax1, 'on')
     hold(ax1, 'off');
 
 
@@ -139,6 +140,7 @@ t = tiledlayout(1, 2); % Create a 2-row, 3-column grid
     set(ax2, 'FontSize', 10);
     legend(ax2, 'Interpreter','latex', 'Location','best');
     pbaspect(ax2, [2 1 1]); % You can still control aspect ratio
+    box(ax2, 'on')
     hold(ax2, 'off');
 
 

@@ -39,14 +39,10 @@ clc
     % ---- Initial Conditions ----
     
         p_0             = [8; 0];      % initial location of the agent 
-       
-        %x_hat_0         = [-4, 1, 0, 3; 
-        %                   3, 3, 4, -2];
+
 
         x_hat_0         = [7.7, 7.812, 7.7, 7.703; 
                            0, 0.234, 0, 0.042];   % agent's initial guess of target positions
-
-        
 
     % ---- Control Constants ----
     
@@ -79,39 +75,13 @@ clc
     
     % Agent utilizing controller and localization from Sui et al. (2025)
     AgentPDT1 = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
-                        alpha_1, alpha_2, d_des_handle1, tSteps, qtyTargets, Targets, initial_heading, 10, 0);
+                        alpha_1, alpha_2, d_des_handle1, tSteps, qtyTargets, Targets, initial_heading, 1000, 0);
 
     AgentPDT2 = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
-                        alpha_1, alpha_2, d_des_handle2, tSteps, qtyTargets, Targets, initial_heading, 10, 0);
+                        alpha_1, alpha_2, d_des_handle2, tSteps, qtyTargets, Targets, initial_heading, 1000, 0);
 
     AgentPDT3 = Agent(p_0, x_hat_0, k_omega, Tc1, Tc2, ...
-                        alpha_1, alpha_2, d_des_handle3, tSteps, qtyTargets, Targets, initial_heading, 10, 0);
-
-
-    % For theoretical experimentation
-            vectors_to_targets = Targets - p_0;
-            %    We use atan2(y, x) to get the angle in radians
-            all_bearing_angles = atan2(vectors_to_targets(2,:), vectors_to_targets(1,:));
-
-            max_distance_to_centroid = max(vecnorm(Targets - p_0));
-        
-            % 3. Find the max and min angles
-            max_phi = max(all_bearing_angles);
-            min_phi = min(all_bearing_angles);
-        
-            % 4. Define gamma as half the angular spread
-            gamma = (max_phi - min_phi) / 2;
-            rs = 0.1
-            % mind0 = (rs)/abs(cos(gamma)) + max_distance_to_centroid %Geometric definition
-            mind0 = min(rs/abs(cos(gamma)), k_omega*Tc1 + rs)
-
-            d0 = min(vecnorm(Targets - p_0));
-
-            if d0 > mind0
-                display("Hooray")
-            else
-                display("Oh no")
-            end
+                        alpha_1, alpha_2, d_des_handle3, tSteps, qtyTargets, Targets, initial_heading, 1000, 0);
 
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -119,21 +89,21 @@ clc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for t = 1:tSteps
-    AgentPDT1 = AgentPDT1.updateDesiredDistance(t, dT);
     AgentPDT1 = AgentPDT1.getBearings(t, Targets);                    % --- Take bearing measurements
     AgentPDT1 = AgentPDT1.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
+    AgentPDT1 = AgentPDT1.updateDesiredDistance(t, dT);
     AgentPDT1 = AgentPDT1.controlInputPDT(t, Tc1, Tc2, dT);                % --- Run control law
     AgentPDT1 = AgentPDT1.move(dT, t);                                % --- Execute control law
 
-    AgentPDT2 = AgentPDT2.updateDesiredDistance(t, dT);
     AgentPDT2 = AgentPDT2.getBearings(t, Targets);                    % --- Take bearing measurements
     AgentPDT2 = AgentPDT2.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
+    AgentPDT2 = AgentPDT2.updateDesiredDistance(t, dT);
     AgentPDT2 = AgentPDT2.controlInputPDT(t, Tc1, Tc2, dT);                % --- Run control law
     AgentPDT2 = AgentPDT2.move(dT, t);                                % --- Execute control law
 
-    AgentPDT3 = AgentPDT3.updateDesiredDistance(t, dT);
     AgentPDT3 = AgentPDT3.getBearings(t, Targets);                    % --- Take bearing measurements
     AgentPDT3 = AgentPDT3.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
+    AgentPDT3 = AgentPDT3.updateDesiredDistance(t, dT);
     AgentPDT3 = AgentPDT3.controlInputPDT(t, Tc1, Tc2, dT);                % --- Run control law
     AgentPDT3 = AgentPDT3.move(dT, t);                                % --- Execute control law
 
@@ -328,12 +298,13 @@ hold(ax1, 'off');
         xline(ax3, Tc1 + Tc2, '-.', {'$T_{c,1} + T_{c,2}$'}, ...
             'Interpreter', 'latex', ...
             'FontSize', 10, ...
-            'LabelVerticalAlignment', 'bottom', ...
+            'LabelVerticalAlignment', 'top', ...
             'HandleVisibility', 'off'); 
     end
 
     % --- Axis Properties ---
     xlim(ax3, [0, tFinal])
+    ylim(ax3,[-0.3, 6.5])
     box(ax3, 'on'); % <--- ADDED THIS to close the box
     title(ax3, '(c) Tracking Errors', 'Interpreter','latex')
     xlabel(ax3, 'time (sec)', 'Interpreter','latex')

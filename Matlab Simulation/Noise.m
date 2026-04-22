@@ -19,7 +19,7 @@ clc
     tBegin = 0;             % (seconds)
     tFinal = 30;            % (seconds)
     frequency = 1000;
-    dT     = 0.01;         % (seconds)
+    dT     = 0.001;         % (seconds)
     
     tSteps = (tFinal-tBegin)/dT;   % force tSteps to be an integer
 
@@ -66,11 +66,6 @@ clc
     
         % Desired Distance to Targets
         d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 4;
-        d_des_handle1 = @(time, theta, x_hat_positions, c_hat, y) 5.7 + 0.2*sin(2.1*time);
-        %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeConvexHullRadius(theta, c_hat, x_hat_positions, y);
-        d_des_handle2 = @(time, theta, x_hat_positions, c_hat, y) computeMinCircleRadius(theta, c_hat, x_hat_positions, y);
-        d_des_handle3 = @(time, theta, x_hat_positions, c_hat, y) computeMinEllipseRadius(theta, c_hat, x_hat_positions, y);
-        
 
     % ----------------------------------------
     %             Create agents
@@ -85,9 +80,10 @@ clc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for t = 1:tSteps
-    Agent = Agent.updateDesiredDistance(t, dT);
+    
     Agent = Agent.getBearingsWithNoise(t, Targets);                    % --- Take bearing measurements
     Agent = Agent.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
+    Agent = Agent.updateDesiredDistance(t, dT);
     Agent = Agent.controlInputPDTUpdated(t, Tc1, Tc2, dT);                % --- Run control law
     Agent = Agent.move(dT, t);                                % --- Execute control law
 
@@ -320,6 +316,48 @@ annotation('line', [p1(1), p2(1)], [p1(2), p2(2)], ...
 p3 = data2fig(ax4, x_zoom(2), y_zoom(1)); % bottom-right of rectangle
 p4 = [ax4_inset.Position(1), ...          % left
       ax4_inset.Position(2)];             % bottom
+annotation('line', [p3(1), p4(1)], [p3(2), p4(2)], ...
+    'Color', [0, 0.6, 0], 'LineStyle', '--', 'LineWidth', 1);
+
+
+% --- Zoomed inset on ax3 (MUST come after all nexttile calls) ---
+drawnow; % Force layout to finalise tile positions before reading them
+
+x_zoom = [6, 26];      % x range to zoom into - adjust to your data
+y_zoom = [-0.2, 0.2];  % y range to zoom into - adjust to your data
+
+ax3_inset = axes('Position', [0.75, 0.69, 0.14, 0.08]); % [left bottom width height] in figure coords
+box(ax3_inset, 'on');
+hold(ax3_inset, 'on')
+plot(ax3_inset, t_vec, real(Agent.delta_traj(1:mytStepFinal)),...
+        'DisplayName', '$$\delta(t)$$ [Sinusoidal]', ...
+        'LineWidth', 1, ...
+        'Color'      ,  [0, 0, 0.5]);
+
+    hold(ax3_inset, 'off')
+xlim(ax3_inset, x_zoom);
+ylim(ax3_inset, y_zoom);
+set(ax3_inset, 'FontSize', 7);
+grid(ax3_inset, 'on');
+
+% Draw green rectangle on ax3 showing the zoomed region
+rectangle(ax3, 'Position', [x_zoom(1), y_zoom(1) - 0.2, diff(x_zoom), 2*diff(y_zoom)], ...
+    'EdgeColor', [0, 0.6, 0], 'LineWidth', 1.2);
+
+% Helper: convert data coordinates on an axes -> normalised figure coordinates
+data2fig = @(ax, xd, yd) [...
+    ax.Position(1) + (xd - ax.XLim(1)) / diff(ax.XLim) * ax.Position(3), ...
+    ax.Position(2) + (yd - ax.YLim(1)) / diff(ax.YLim) * ax.Position(4)];
+
+% Top-left corner of rectangle -> bottom-left of inset
+p1 = data2fig(ax3, x_zoom(1), y_zoom(2));
+p2 = [ax3_inset.Position(1), ax3_inset.Position(2)];
+annotation('line', [p1(1), p2(1)], [p1(2), p2(2)], ...
+    'Color', [0, 0.6, 0], 'LineStyle', '--', 'LineWidth', 1);
+
+% Top-right corner of rectangle -> bottom-right of inset
+p3 = data2fig(ax3, x_zoom(2), y_zoom(2));
+p4 = [ax3_inset.Position(1) + ax3_inset.Position(3), ax3_inset.Position(2)];
 annotation('line', [p3(1), p4(1)], [p3(2), p4(2)], ...
     'Color', [0, 0.6, 0], 'LineStyle', '--', 'LineWidth', 1);
 

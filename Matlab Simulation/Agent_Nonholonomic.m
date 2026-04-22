@@ -4,6 +4,8 @@ classdef Agent_Nonholonomic
 
         % ---- State variables ----
             p                   % 2x1 vector: current agent position [x; y]
+            z
+            varepsilon
             p_dot               % 2x1 vector: current agent velocity [vx; vy]
             p_traj              % 2xT matrix: agent position history over time
             heading             % Scalar: agent heading angle (rad)
@@ -19,6 +21,8 @@ classdef Agent_Nonholonomic
             varphi_traj         % 1xN cell: each cell contains 2xT matrix of bearing components over time
             psi                 % Scalar: current bearing angle to targets centroid (rad)
             bar_psi             % Scalar: estimated bearing angle to targets centroid (rad)
+            eta
+            bar_eta
             projPoint           % 2x1 vector: coordinates of current projection point
     
         % ---- Target state estimators ----
@@ -77,7 +81,9 @@ classdef Agent_Nonholonomic
             theta
             integral
             integralss
-            
+            theta_d_dot_traj        % 1xT vector: history of desired heading rate over time
+            theta_d_dot
+
         % ---- Trajectory type for delta calculation ----
             trajectory_type     % String: 'hull', 'circle', or 'ellipse'
 
@@ -89,6 +95,8 @@ classdef Agent_Nonholonomic
         function obj = Agent_Nonholonomic(p_0, x_hat_0_cell, k_omega, Tc0, Tc1, Tc2, alpha_0, alpha_1, alpha_2, d_des_function_handle, tSteps, numTargets, targets, heading)
             % Initial agent state
             obj.p = p_0;                                 % Initial position (2x1)
+            obj.varepsilon = 0.05;
+            obj.z = p_0 + obj.varepsilon * heading;
             obj.p_dot = zeros(2, 1);                     % Velocity (2x1)
             obj.p_traj = zeros(2, tSteps);               % Position trajectory (2xT)
             obj.heading = heading;                       % Initial heading (scalar)
@@ -111,6 +119,7 @@ classdef Agent_Nonholonomic
             obj.theta_traj = zeros(1, tSteps);
             obj.integral = zeros(1, tSteps);
             obj.integralss = zeros(1, tSteps);
+            obj.theta_d_dot_traj = zeros(1, tSteps);
 
             % ---- Xu et al. controller defaults ----
             % These can be overridden after construction if needed.
@@ -146,6 +155,9 @@ classdef Agent_Nonholonomic
             % Projection and auxiliary variables
             obj.psi = zeros(2, 1);                       % Auxiliary vector ψ
             obj.bar_psi = zeros(2, 1);                   % Estimated ψ
+            obj.eta = zeros(2, 1);                       % Auxiliary vector ψ
+            obj.bar_eta = zeros(2, 1);                   % Estimated ψ
+            
             obj.projPoint = zeros(2, 1);                 % Projection point on hull
         
             % Estimation parameters
@@ -200,7 +212,7 @@ classdef Agent_Nonholonomic
                 x_hat_positions(:, i) = obj.x_hat{i}(:, cur_tStep);
             end
         
-            theta = atan2(obj.p(2) - obj.c_hat(2), obj.p(1) - obj.c_hat(1));
+            theta = atan2(obj.z(2) - obj.c_hat(2), obj.z(1) - obj.c_hat(1));
 
             obj.theta_traj(t) = theta;
         
@@ -234,11 +246,15 @@ classdef Agent_Nonholonomic
                                     -sin(pi/2), cos(pi/2)] * obj.varphi{i};
             end
             % Bearings to centroid (This is the "average phi" method, not bisector)
-            obj.psi = (obj.c - obj.p) / norm((obj.c - obj.p));
+            obj.psi = (obj.c_hat - obj.p) / norm((obj.c_hat - obj.p));
             obj.bar_psi = [ cos(pi/2), sin(pi/2);
                             -sin(pi/2), cos(pi/2)] * obj.psi;
+
+            obj.eta = (obj.c_hat - obj.z) / norm((obj.c_hat - obj.z));
+            obj.bar_eta = [ cos(pi/2), sin(pi/2);
+                            -sin(pi/2), cos(pi/2)] * obj.eta;
             
-            obj.delta_traj(t) = norm(obj.c_hat - obj.p) - obj.d_des;
+            
             
             
             % --- CORRECTED LOCALIZATION HEADING ---
@@ -320,7 +336,7 @@ classdef Agent_Nonholonomic
         function obj = controlInputPDTHolonomic(obj, t, dT)
 
             % Error in distance to shape
-            obj.d_tilde = norm(obj.c - obj.p) - obj.d_des;
+            obj.d_tilde = norm(obj.c_hat - obj.p) - obj.d_des;
             
             
             if (t*dT > obj.Tc1 + obj.Tc2)
@@ -353,7 +369,7 @@ classdef Agent_Nonholonomic
 
         function obj = controlInputPDTv1(obj, t, dT)
             % Error in distance to shape
-            obj.d_tilde = norm(obj.c - obj.p) - obj.d_des;
+            obj.d_tilde = norm(obj.c_hat - obj.p) - obj.d_des;
             
             if t*dT < obj.Tc1
                 f_i = obj.k_omega  * obj.localization_heading;
@@ -379,7 +395,7 @@ classdef Agent_Nonholonomic
         function obj = controlInputPDTv2(obj, t, dT)
 
             % Error in distance to shape
-            obj.d_tilde = norm(obj.c - obj.p) - obj.d_des;
+            obj.d_tilde = norm(obj.c_hat - obj.p) - obj.d_des;
             
             if t*dT < obj.Tc1
                 obj.u = obj.k_omega  * obj.localization_heading;
@@ -659,7 +675,7 @@ classdef Agent_Nonholonomic
         % T_{c,1}
         function obj = controlInputPDTv4(obj, t, dT)
             % Compute holonomic control effort (virtual controller)
-            obj.d_tilde = norm(obj.c - obj.p) - obj.d_des;
+            obj.d_tilde = norm(obj.c_hat - obj.p) - obj.d_des;
             
             if t * dT < obj.Tc1
                 obj.u = obj.k_omega * obj.localization_heading;
@@ -708,7 +724,7 @@ classdef Agent_Nonholonomic
         % T{c,1}
         function obj = controlInputPDTv5(obj, t, dT)
             % Compute holonomic control effort (virtual controller)
-            obj.d_tilde = norm(obj.c - obj.p) - obj.d_des;
+            obj.d_tilde = norm(obj.c_hat - obj.p) - obj.d_des;
             
             % Smoothing parameters
             epsilon = 0.5; % Blending duration (seconds), choose arbitrarily small
@@ -772,7 +788,7 @@ classdef Agent_Nonholonomic
 
         function obj = controlInputPDTv6(obj, t, dT)
             % Compute holonomic control effort (virtual controller)
-            obj.d_tilde = norm(obj.c - obj.p) - obj.d_des;
+            obj.d_tilde = norm(obj.c_hat - obj.p) - obj.d_des;
             
             if t * dT < obj.Tc1
                 obj.u = obj.k_omega * obj.localization_heading;
@@ -784,6 +800,20 @@ classdef Agent_Nonholonomic
                 obj.u = v_cen * obj.psi + obj.k_omega * obj.bar_psi;
             end
             
+            % Desired heading
+            theta_d = atan2(obj.u(2), obj.u(1));
+            obj.theta_tilde = wrapToPi(obj.heading - theta_d);
+            
+            % Speed: project onto heading
+            obj.v = norm(obj.u) * cos(obj.theta_tilde);
+            
+            % Feedforward: numerical derivative of theta_d
+            if isempty(obj.theta_d_prev)
+                obj.theta_d_prev = theta_d;
+            end
+            obj.theta_d_dot = wrapToPi(theta_d - obj.theta_d_prev) / dT;
+            obj.theta_d_prev = theta_d;
+            obj.theta_d_dot_traj(t) = obj.theta_d_dot; 
 
 
             if t * dT < obj.Tc1
@@ -797,11 +827,118 @@ classdef Agent_Nonholonomic
                 h = [cos(obj.heading); sin(obj.heading)];
                 h_bar = [-sin(obj.heading); cos(obj.heading)];
     
-                epsilon = 0.01;
+                epsilon = obj.varepsilon;
     
                 obj.v = h' * obj.u;
                 obj.heading_dot = 1/epsilon * h_bar' * obj.u;
 
+            end
+        end
+
+        function obj = controlInputPDTv7(obj, t, dT)
+            % Compute holonomic control effort (virtual controller)
+            obj.d_tilde = norm(obj.c_hat - obj.p) - obj.d_des;
+        
+            if t * dT < obj.Tc1
+                obj.u = obj.k_omega * obj.localization_heading;
+            else
+                v_cen = 1/(obj.alpha_2 * obj.Tc2) ...
+                      * exp(abs(obj.d_tilde) ^ obj.alpha_2) ...
+                      * sig(obj.d_tilde, 1 - obj.alpha_2) ...
+                      - obj.d_des_dot(t);
+                obj.u = v_cen * obj.psi + obj.k_omega * obj.bar_psi;
+            end
+        
+            if t * dT < obj.Tc1
+                % Phase 1
+                obj.heading     = atan2(obj.u(2), obj.u(1));
+                obj.heading_dot = 0;
+                obj.v           = norm(obj.u);
+            else
+                % Phase 2 - Non-holonomic layer
+                h     = [cos(obj.heading); sin(obj.heading)];
+                h_bar = [-sin(obj.heading); cos(obj.heading)];
+        
+                % Adaptive epsilon: scales with orbit tracking error,
+                % clamped above epsilon_min to prevent singularity on the orbit
+                kappa_epsilon = 0.5;               % tune in (0, 1)
+                epsilon_min   = 0.01;              % fallback near d_tilde = 0
+                epsilon       = max(kappa_epsilon * abs(obj.d_tilde), epsilon_min);
+        
+                obj.v           = h' * obj.u;
+                obj.heading_dot = 1/epsilon * h_bar' * obj.u;
+            end
+        end
+
+
+        % NEED TO UPDATE
+        function obj = controlInputPDTv8(obj, t, dT)
+            % Compute holonomic control effort (virtual controller)
+            obj.z = obj.p + obj.varepsilon * [cos(obj.heading); sin(obj.heading)];
+            obj.d_tilde = norm(obj.c_hat - obj.z) - obj.d_des;
+            
+            if t * dT < obj.Tc1
+                obj.u = obj.k_omega * obj.localization_heading;
+            else
+                v_cen = 1/(obj.alpha_2 * obj.Tc2) ...
+                      * exp(abs(obj.d_tilde) ^ obj.alpha_2) ...
+                      * sig(obj.d_tilde, 1 - obj.alpha_2) ...
+                      - obj.d_des_dot(t);
+                obj.u = v_cen * obj.eta + obj.k_omega * obj.bar_eta;
+            end
+            
+            if t * dT < obj.Tc1
+                % Phase 1
+                obj.heading = atan2(obj.u(2), obj.u(1));
+                obj.heading_dot = 0;
+                obj.v = norm(obj.u);
+
+            else
+                % Phase 2 - Non-holonomic layer
+                h = [cos(obj.heading); sin(obj.heading)];
+                h_bar = [-sin(obj.heading); cos(obj.heading)];
+    
+      
+                obj.v = h' * obj.u;
+                obj.heading_dot = 1/obj.varepsilon * h_bar' * obj.u;
+
+            end
+        end
+
+        function obj = controlInputPDTv9(obj, t, dT)
+            % Compute holonomic control effort (virtual controller)
+            obj.z = obj.p + obj.varepsilon * [cos(obj.heading); sin(obj.heading)];
+            obj.d_tilde = norm(obj.c_hat - obj.z) - obj.d_des;
+            
+            if t * dT < obj.Tc1
+                obj.u = obj.k_omega * obj.localization_heading;
+            else
+                v_cen = 1/(obj.alpha_2 * obj.Tc2) ...
+                      * exp(abs(obj.d_tilde) ^ obj.alpha_2) ...
+                      * sig(obj.d_tilde, 1 - obj.alpha_2) ...
+                      - obj.d_des_dot(t);
+                obj.u = v_cen * obj.eta + obj.k_omega * obj.bar_eta;
+            end
+            
+            if t * dT < obj.Tc1
+                % Phase 1
+                obj.heading = atan2(obj.u(2), obj.u(1));
+                obj.heading_dot = 0;
+                obj.v = norm(obj.u);
+
+            else
+                % Phase 2 - Non-holonomic layer
+                h = [cos(obj.heading); sin(obj.heading)];
+                h_bar = [-sin(obj.heading); cos(obj.heading)];
+    
+      
+                obj.v = h' * obj.u;
+                obj.heading_dot = 1/obj.varepsilon * h_bar' * obj.u;
+
+            end
+            saturation = pi/2;
+            if abs(obj.heading_dot) > saturation
+                obj.heading_dot = sign(obj.heading_dot) * saturation;
             end
         end
 
@@ -820,6 +957,8 @@ classdef Agent_Nonholonomic
         
             obj.heading_dot_traj(t) = wrapToPi(new_heading - obj.heading) / dT;
             obj.heading = new_heading;
+
+            obj.delta_traj(t) = norm(obj.c - obj.p) - obj.d_des;
         end
 
         % Moving agent with non-holonomic constraints
@@ -831,14 +970,13 @@ classdef Agent_Nonholonomic
             x_dot = obj.v * cos(obj.heading);
             y_dot = obj.v * sin(obj.heading);
             theta_dot = obj.heading_dot;
-            
             % Store velocity
             obj.p_dot = [x_dot; y_dot];
             
-            theta_dot_sat = pi/4;
-            if (abs(theta_dot) > abs(theta_dot_sat))
-                theta_dot = sign(theta_dot) * abs(theta_dot_sat);
-            end
+            %theta_dot_sat = pi/4;
+            %if (abs(theta_dot) > abs(theta_dot_sat))
+            %    theta_dot = sign(theta_dot) * abs(theta_dot_sat);
+            %end
 
             % Integration to find new agent pose
             obj.p(1) = obj.p(1) + x_dot * dT;
@@ -847,11 +985,15 @@ classdef Agent_Nonholonomic
             
             % Normalize heading to [-pi, pi]
             obj.heading = atan2(sin(obj.heading), cos(obj.heading));
+
+            obj.z = obj.p + obj.varepsilon * [cos(obj.heading); sin(obj.heading)];
             
             % Store trajectories
             obj.p_traj(:, t) = obj.p;
             obj.theta_error_traj(t) = obj.theta_tilde;
             obj.heading_dot_traj(t) = obj.heading_dot;
+
+            obj.delta_traj(t) = norm(obj.c - obj.p) - obj.d_des;
         end
         
     end

@@ -18,7 +18,7 @@ clc
 
     tBegin = 0;             % (seconds)
     tFinal = 42;            % (seconds)
-    dT     = 0.01;         % (seconds)
+    dT     = 0.001;         % (seconds)
     
     tSteps = (tFinal-tBegin)/dT;   % force tSteps to be an integer
 
@@ -53,17 +53,17 @@ clc
         % PDT algorthm parameters
             alpha_0 = 0.5;
             alpha_1 = 0.5;
-            alpha_2 = 0.8;
+            alpha_2 = 0.5;
             Tc0 = 0.5;
-            Tc1 = 1;
-            Tc2 = 1;
+            Tc1 = 2;
+            Tc2 = 2;
 
 
         % Cao algorithm parameters
             alpha = 5;
 
         % Non-holonomic parameters
-            initial_heading = pi/2;
+            initial_heading = 0;
     
         % Desired Distance to Targets
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 1;
@@ -98,19 +98,19 @@ for t = 1:tSteps
     AgentPDT1 = AgentPDT1.updateDesiredDistance(t, dT);
     AgentPDT1 = AgentPDT1.getBearings(t, Targets);                    % --- Take bearing measurements
     AgentPDT1 = AgentPDT1.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
-    AgentPDT1 = AgentPDT1.controlInputPDTv4(t, dT);                % --- Run control law
+    AgentPDT1 = AgentPDT1.controlInputPDTv8(t, dT);                % --- Run control law
     AgentPDT1 = AgentPDT1.moveNonHolonomic(dT, t);                                % --- Execute control law
 
     AgentPDT2 = AgentPDT2.updateDesiredDistance(t, dT);
     AgentPDT2 = AgentPDT2.getBearings(t, Targets);                    % --- Take bearing measurements
     AgentPDT2 = AgentPDT2.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
-    AgentPDT2 = AgentPDT2.controlInputPDTv4(t, dT);                % --- Run control law
+    AgentPDT2 = AgentPDT2.controlInputPDTv8(t, dT);                % --- Run control law
     AgentPDT2 = AgentPDT2.moveNonHolonomic(dT, t);                                % --- Execute control law
 
     AgentPDT3 = AgentPDT3.updateDesiredDistance(t, dT);
     AgentPDT3 = AgentPDT3.getBearings(t, Targets);                    % --- Take bearing measurements
     AgentPDT3 = AgentPDT3.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
-    AgentPDT3 = AgentPDT3.controlInputPDTv4(t, dT);                % --- Run control law
+    AgentPDT3 = AgentPDT3.controlInputPDTv8(t, dT);                % --- Run control law
     AgentPDT3 = AgentPDT3.moveNonHolonomic(dT, t);                                % --- Execute control law
 
 end
@@ -122,7 +122,7 @@ end
 mytStepFinal = max(1, min(round(tFinal/dT), tSteps)); % ensure integer index
 targetColors = lines(qtyTargets); 
 t_vec = (0:mytStepFinal-1) * dT; % Create a time vector
-figure; % Create a new figure
+figure('Position', [50 100 1100 420]); % Create a new figure
 t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
 
 %  ---- (a) Agent Trajectory plot -----
@@ -225,7 +225,7 @@ stack_right = [h_paths(1:3)];
 % Combine them
 legend_handles = [stack_right; stack_middle; stack_left];
 
-legend(ax1, legend_handles, 'Interpreter','latex', 'Location','best', 'NumColumns', 2);
+legend(ax1, legend_handles, 'Interpreter','latex', 'Location','north', 'NumColumns', 2);
 hold(ax1, 'off');
 
 % ------- (b) Estimate Trajectories plot --------
@@ -275,7 +275,7 @@ hold(ax1, 'off');
     set(ax2, 'FontSize', 10);
     xlim(ax2, [-6 11]);
     ylim(ax2, [-6 14]);
-    legend(ax2, 'Interpreter','latex', 'Location','best', 'NumColumns', 3);
+    legend(ax2, 'Interpreter','latex', 'Location','north', 'NumColumns', 3);
     hold(ax2, 'off');
 
 %  ---- (c) Tracking Error Plot -----
@@ -304,23 +304,25 @@ hold(ax1, 'off');
         xline(ax3, Tc1 + Tc2, '-.', {'$T_{c,1} + T_{c,2}$'}, ...
             'Interpreter', 'latex', ...
             'FontSize', 10, ...
-            'LabelVerticalAlignment', 'bottom', ...
+            'LabelVerticalAlignment', 'top', ...
             'HandleVisibility', 'off'); 
     end
 
     % --- Axis Properties ---
     xlim(ax3, [0, tFinal])
+    ylim(ax3, [-0.6, 7])
     box(ax3, 'on'); % <--- ADDED THIS to close the box
     title(ax3, '(c) Tracking Errors', 'Interpreter','latex')
     xlabel(ax3, 'time (sec)', 'Interpreter','latex')
     ylabel(ax3, 'Errors (m)', 'Interpreter','latex')
     grid(ax3, 'on');
     set(ax3, 'FontSize', 10);
-    legend(ax3, 'Interpreter','latex', 'Location','best');
+    legend(ax3, 'Interpreter','latex', 'Location','northeast');
     pbaspect(ax3, [2 1 1]); 
     hold(ax3, 'off');
 
-% ------ (d) Estimation Error Plot ---------
+
+% ------ (c) Estimation Error Plot ---------
     % This plot is in column 3, bottom row (tile 6)
     ax4 = nexttile(6); 
     hold(ax4, 'on');
@@ -331,7 +333,7 @@ hold(ax1, 'off');
         err_norm_i = vecnorm(AgentPDT1.x_tilde_traj{i}(:, 1:mytStepFinal));
         
         % Plotting norm against t_vec
-        plot(ax4, t_vec, err_norm_i, ...
+        semilogx(ax4, (1:mytStepFinal) * dT, err_norm_i, ...
             'LineWidth', 1.3, ...
             'LineStyle', '--', ...
             'Color', targetColors(i, :),...
@@ -348,19 +350,73 @@ hold(ax1, 'off');
 
     % --- Axis Properties ---
     xlim(ax4, [0, tFinal])
+    ylim([0 10])
     box(ax4, 'on'); % <--- ADDED THIS to close the box
     title(ax4, '(d) Estimation Errors', 'Interpreter','latex')
     xlabel(ax4, 'time (sec)', 'Interpreter','latex')
     ylabel(ax4, 'Errors (m)', 'Interpreter','latex')
     grid(ax4, 'on');
     set(ax4, 'FontSize', 10);
-    legend(ax4, 'Interpreter','latex', 'Location','best');
+    legend(ax4, 'Interpreter','latex', 'Location','northeast');
     pbaspect(ax4, [2 1 1]); 
+    set(ax4, 'XScale', 'log')
     hold(ax4, 'off');
+
 
 % --- Final layout adjustments for the whole figure ---
 t.TileSpacing = 'compact';
 t.Padding = 'compact';
+
+
+
+% --- Zoomed inset on ax3 (MUST come after all nexttile calls) ---
+drawnow; % Force layout to finalise tile positions before reading them
+
+x_zoom = [10, 35];      % x range to zoom into - adjust to your data
+y_zoom = [-0.05, 0.05];  % y range to zoom into - adjust to your data
+
+ax3_inset = axes('Position', [0.75, 0.69, 0.14, 0.08]); % [left bottom width height] in figure coords
+box(ax3_inset, 'on');
+hold(ax3_inset, 'on')
+plot(ax3_inset, t_vec, real(AgentPDT1.delta_traj(1:mytStepFinal)),...
+        'DisplayName', '$$\delta(t)$$ [Sinusoidal]', ...
+        'LineWidth', 1, ...
+        'Color'      ,  [0, 0.5, 0]);
+
+    plot(ax3_inset, t_vec, real(AgentPDT2.delta_traj(1:mytStepFinal)),...
+        'DisplayName', '$$\delta(t)$$ [Min. Circle]', ...
+        'LineWidth', 1, ...
+        'Color'      ,  'r');
+    plot(ax3_inset, t_vec, real(AgentPDT3.delta_traj(1:mytStepFinal)),...
+        'DisplayName', '$$\delta(t)$$ [Approx. Min. Ellipse]', ...
+        'LineWidth', 1, ...
+        'Color'      ,  'b');
+    hold(ax3_inset, 'off')
+xlim(ax3_inset, x_zoom);
+ylim(ax3_inset, y_zoom);
+set(ax3_inset, 'FontSize', 7);
+grid(ax3_inset, 'on');
+
+% Draw green rectangle on ax3 showing the zoomed region
+rectangle(ax3, 'Position', [x_zoom(1), y_zoom(1) - 0.3, diff(x_zoom), 6*diff(y_zoom)], ...
+    'EdgeColor', [0, 0.6, 0], 'LineWidth', 1.2);
+
+% Helper: convert data coordinates on an axes -> normalised figure coordinates
+data2fig = @(ax, xd, yd) [...
+    ax.Position(1) + (xd - ax.XLim(1)) / diff(ax.XLim) * ax.Position(3), ...
+    ax.Position(2) + (yd - ax.YLim(1)) / diff(ax.YLim) * ax.Position(4)];
+
+% Top-left corner of rectangle -> bottom-left of inset
+p1 = data2fig(ax3, x_zoom(1), y_zoom(2));
+p2 = [ax3_inset.Position(1), ax3_inset.Position(2)];
+annotation('line', [p1(1), p2(1)], [p1(2), p2(2)], ...
+    'Color', [0, 0.6, 0], 'LineStyle', '--', 'LineWidth', 1);
+
+% Top-right corner of rectangle -> bottom-right of inset
+p3 = data2fig(ax3, x_zoom(2), y_zoom(2));
+p4 = [ax3_inset.Position(1) + ax3_inset.Position(3), ax3_inset.Position(2)];
+annotation('line', [p3(1), p4(1)], [p3(2), p4(2)], ...
+    'Color', [0, 0.6, 0], 'LineStyle', '--', 'LineWidth', 1);
 
 
 

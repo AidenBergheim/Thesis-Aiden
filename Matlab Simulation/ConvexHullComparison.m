@@ -66,9 +66,10 @@ clc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for t = 1:tSteps
-    AgentPDT = AgentPDT.updateDesiredDistance(t, dT);
+    
     AgentPDT = AgentPDT.getBearings(t, Targets);                    % --- Take bearing measurements
     AgentPDT = AgentPDT.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
+    AgentPDT = AgentPDT.updateDesiredDistance(t, dT);
     AgentPDT = AgentPDT.controlInputPDT(t, Tc1, Tc2, dT);                % --- Run control law
     AgentPDT = AgentPDT.move(dT, t);                                % --- Execute control law
 
@@ -151,7 +152,7 @@ ylim([-5 15])
 grid(ax1, 'on');
 set(ax1, 'FontSize', 10);
 legend(ax1, [h_path_MD, h_path_PDT, h_final_MD, h_final_PDT, h_start, h_targets'], ...
-    'Interpreter', 'latex', 'Location', 'best', 'NumColumns', 2);
+    'Interpreter', 'latex', 'Location', 'north', 'NumColumns', 2);
 hold(ax1, 'off');
 
 
@@ -176,13 +177,14 @@ plot(ax2, t_vec, real(AgentPDT.delta_traj(1:mytStepFinal)), ...
 yline(0, 'k--', 'LineWidth', 0.5, 'HandleVisibility', 'off');
 
 xlim(ax2, [0, tFinal]);
+ylim(ax2, [-0.5, 6])
 box(ax2, 'on');
 title(ax2, '(b) Tracking Errors', 'Interpreter', 'latex')
 xlabel(ax2, 'time (sec)', 'Interpreter', 'latex')
 ylabel(ax2, 'Errors (m)', 'Interpreter', 'latex')
 grid(ax2, 'on');
 set(ax2, 'FontSize', 10);
-legend(ax2, 'Interpreter', 'latex', 'Location', 'best');
+legend(ax2, 'Interpreter', 'latex', 'Location', 'northeast');
 pbaspect(ax2, [2 1 1]);
 hold(ax2, 'off');
 %ylim([-1 18])

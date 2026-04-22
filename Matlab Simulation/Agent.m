@@ -173,6 +173,7 @@ classdef Agent
             theta = atan2(obj.p(2) - obj.c_hat(2), obj.p(1) - obj.c_hat(1));
 
             obj.theta_traj(t) = theta;
+            
         
             obj.d_des = obj.d_des_func(current_time, theta, x_hat_positions, obj.c_hat, obj.p);
             
@@ -203,12 +204,10 @@ classdef Agent
                 obj.bar_varphi{i} = [ cos(pi/2), sin(pi/2);
                                     -sin(pi/2), cos(pi/2)] * obj.varphi{i};
             end
-            % Bearings to centroid (This is the "average phi" method, not bisector)
+            
             obj.psi_hat = (obj.c_hat - obj.p) / norm((obj.c_hat - obj.p));
             obj.bar_psi_hat = [ cos(pi/2), sin(pi/2);
                             -sin(pi/2), cos(pi/2)] * obj.psi_hat;
-            
-            obj.delta_traj(t) = norm(obj.c_hat - obj.p) - obj.d_des;
             
             % --- CORRECTED LOCALIZATION HEADING ---
             if obj.localization_heading == zeros(2,1)
@@ -269,7 +268,7 @@ classdef Agent
             obj.bar_psi_hat = [ cos(pi/2), sin(pi/2);
                             -sin(pi/2), cos(pi/2)] * obj.psi_hat;
             
-            obj.delta_traj(t) = norm(obj.c_hat - obj.p) - obj.d_des;
+           
             
             % --- CORRECTED LOCALIZATION HEADING ---
             if obj.localization_heading == zeros(2,1)
@@ -393,31 +392,12 @@ classdef Agent
             % Error in distance to shape
             obj.d_tilde = norm(obj.c_hat - obj.p) - obj.d_des;
             
-            
-            if (t*dT > Tc1 + Tc2)
-                obj.integral(t+1) = obj.integral(t) + obj.d_tilde* dT;
-            else
-                obj.integral(t+1) = obj.integral(t);
-            end
-
-            
-
-            obj.integralss(t+1) = (obj.d_des - sqrt((obj.d_des + obj.d_des_dot(t)*dT)^2 - (obj.k_omega * dT)^2)) / dT;
-
             if t*dT < Tc1
                 obj.u = obj.k_omega  * obj.localization_heading;
             else
-                % with integral
-                %v_cen = 1/(obj.alpha_2 * obj.Tc2) * exp(abs(obj.d_tilde) ^ obj.alpha_2) * sig(obj.d_tilde, 1 - obj.alpha_2) + obj.integral(t+1) - obj.d_des_dot(t);
 
-                % without integral
                 v_cen = 1/(obj.alpha_2 * obj.Tc2) * exp(abs(obj.d_tilde) ^ obj.alpha_2) * sig(obj.d_tilde, 1 - obj.alpha_2) - obj.d_des_dot(t);
-                
 
-                % MD with integral
-                %v_cen = obj.d_tilde + obj.integral(t+1);
-
-                %v_cen = max(min(1.5, v_cen), -1.5);
                 obj.u = v_cen * obj.psi_hat + obj.k_omega  * obj.bar_psi_hat;
 
             end
@@ -457,43 +437,7 @@ classdef Agent
             end
             obj.p = obj.p + obj.p_dot * dT;
             obj.p_traj(:, t) = obj.p;
-        end
-
-        % Moving agent with non-holonomic constraints
-        % Using the control input projection method from Zhao et al. (2019)
-        % To control a planar unicycle model
-        function obj = moveNonHolonomic(obj, dT, t)
-            
-            % Heading vectors
-            h_i = [cos(obj.heading); sin(obj.heading)];
-            h_perp = [-sin(obj.heading); cos(obj.heading)];
-
-            % Defining f_i parameter
-            f_i = obj.u;
-            f_perp = f_i - (h_i' * f_i) * h_i; % perpendicular component of f_i
-            
-            % Calculating velocity and rotation rate inputs
-            v = h_i' * f_i;
-            heading_dot = h_perp' * f_perp;
-           
-            % Updating non-holonomic model
-            x_dot = v * cos(obj.heading);
-            y_dot = v * sin(obj.heading);
-            theta_dot = heading_dot;
-            
-            % Store velocity
-            obj.p_dot = [x_dot; y_dot];
-            
-            % Integration to find new agent pose
-            obj.p(1) = obj.p(1) + x_dot * dT;
-            obj.p(2) = obj.p(2) + y_dot * dT;
-            obj.heading = obj.heading + theta_dot * dT;
-            
-            % Normalize heading to [-pi, pi]
-            obj.heading = atan2(sin(obj.heading), cos(obj.heading));
-            
-            % Store trajectories
-            obj.p_traj(:, t) = obj.p;
+            obj.delta_traj(t) = norm(obj.c - obj.p) - obj.d_des;
         end
         
     end

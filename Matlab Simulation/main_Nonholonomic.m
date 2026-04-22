@@ -17,8 +17,7 @@ clc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     tBegin = 0;             % (seconds)
-    tFinal = 60;            % (seconds)
-    frequency = 200;
+    tFinal = 30;            % (seconds)
     dT     = 0.01;         % (seconds)
     
     tSteps = (tFinal-tBegin)/dT;   % force tSteps to be an integer
@@ -47,15 +46,15 @@ clc
     % ---- Control Constants ----
     
         % control gain for adjusting tangential speed  
-            k_s = 0.1;           
+            k_s = 0.5;           
        
         % PDT algorthm parameters
             alpha_0 = 0.5;
             alpha_1 = 0.5;
             alpha_2 = 0.5;
             Tc0 = 1;
-            Tc1 = 2;
-            Tc2 = 8;
+            Tc1 = 1;
+            Tc2 = 2;
 
         % Cao algorithm parameters
             alpha = 5;
@@ -65,7 +64,7 @@ clc
     
         % Desired Distance to Targets
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 1;
-        d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 1.2 + 0.2*sin(time);
+        d_des_handle = @(time, theta, x_hat_positions, c_hat, y) 1.2 + 0.2*sin(10*theta);
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeConvexHullRadius(theta, c_hat, x_hat_positions, y);
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinCircleRadius(theta, c_hat, x_hat_positions, y);
         %d_des_handle = @(time, theta, x_hat_positions, c_hat, y) computeMinEllipseRadius(theta, c_hat, x_hat_positions, y);
@@ -90,15 +89,15 @@ for t = 1:tSteps
     AgentPDTNonHolonomic = AgentPDTNonHolonomic.updateDesiredDistance(t, dT);
     AgentPDTNonHolonomic = AgentPDTNonHolonomic.getBearings(t, Targets);                    % --- Take bearing measurements
     AgentPDTNonHolonomic = AgentPDTNonHolonomic.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
-    AgentPDTNonHolonomic = AgentPDTNonHolonomic.controlInputPDTv2(t, dT);                % --- Run control law
+    AgentPDTNonHolonomic = AgentPDTNonHolonomic.controlInputPDTv8(t, dT);                % --- Run control law
     AgentPDTNonHolonomic = AgentPDTNonHolonomic.moveNonHolonomic(dT, t);                                % --- Execute control law
 
 
-    AgentPDTHolonomic = AgentPDTHolonomic.updateDesiredDistance(t, dT);
-    AgentPDTHolonomic = AgentPDTHolonomic.getBearings(t, Targets);                    % --- Take bearing measurements
-    AgentPDTHolonomic = AgentPDTHolonomic.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
-    AgentPDTHolonomic = AgentPDTHolonomic.controlInputPDTHolonomic(t, dT);                % --- Run control law
-    AgentPDTHolonomic = AgentPDTHolonomic.move(dT, t);                                % --- Execute control law
+    %AgentPDTHolonomic = AgentPDTHolonomic.updateDesiredDistance(t, dT);
+    %AgentPDTHolonomic = AgentPDTHolonomic.getBearings(t, Targets);                    % --- Take bearing measurements
+    %AgentPDTHolonomic = AgentPDTHolonomic.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
+    %AgentPDTHolonomic = AgentPDTHolonomic.controlInputPDTHolonomic(t, dT);                % --- Run control law
+    %AgentPDTHolonomic = AgentPDTHolonomic.move(dT, t);                                % --- Execute control law
 
 end
 
@@ -214,6 +213,12 @@ t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
         'Color'      ,  'k');
     hold on;
 
+    %plot(ax3, t_vec, 0.0324*AgentPDTNonHolonomic.theta_d_dot_traj(1:mytStepFinal),...
+    %    'DisplayName', '$$\dot{\theta}_d(t)$$', ...
+    %    'LineWidth', 1, ...
+    %    'Color'      ,  'r');
+    %hold on;
+
     %plot(ax3, t_vec, real(AgentPDTNonHolonomic.theta_error_traj(1:mytStepFinal)),...
     %    'DisplayName', '$$\theta_{\epsilon}(t)$$', ...
     %    'LineWidth', 1, ...
@@ -300,6 +305,17 @@ t = tiledlayout(2, 3); % Create a 2-row, 3-column grid
 % --- Final layout adjustments for the whole figure ---
 t.TileSpacing = 'compact';
 t.Padding = 'compact';
+
+
+if (min(AgentPDTNonHolonomic.delta_traj(1:mytStepFinal)) + AgentPDTNonHolonomic.varepsilon > 0)
+    disp('Hooray!')
+else
+    disp('Oh no')
+end
+
+
+
+
 % sig function used for algorithms in Sui et al. (2025)
 function out = sig(z,alpha)
     out = zeros(length(z),1);

@@ -217,7 +217,7 @@ classdef AgentDiscrete
             % --- 65 Hz rate limiter ---
             if (current_time - obj.last_bearing_update_time) < obj.control_rate_period
                 % Hold previous values, still log delta
-                obj.delta_traj(t) = norm(obj.c_hat - obj.p) - obj.d_des;
+                
                 return;
             end
             obj.last_bearing_update_time = current_time;
@@ -241,7 +241,6 @@ classdef AgentDiscrete
             obj.bar_psi_hat = [ cos(pi/2), sin(pi/2);
                             -sin(pi/2), cos(pi/2)] * obj.psi_hat;
             
-            obj.delta_traj(t) = norm(obj.c_hat - obj.p) - obj.d_des;
             
             % --- Localization heading (computed once) ---
             if obj.localization_heading == zeros(2,1)
@@ -265,7 +264,7 @@ classdef AgentDiscrete
 
             % --- 65 Hz rate limiter ---
             if (current_time - obj.last_bearing_update_time) < obj.control_rate_period
-                obj.delta_traj(t) = norm(obj.c_hat - obj.p) - obj.d_des;
+                
                 return;
             end
             obj.last_bearing_update_time = current_time;
@@ -288,8 +287,7 @@ classdef AgentDiscrete
             obj.psi_hat = (obj.c_hat - obj.p) / norm((obj.c_hat - obj.p));
             obj.bar_psi_hat = [ cos(pi/2), sin(pi/2);
                             -sin(pi/2), cos(pi/2)] * obj.psi_hat;
-            
-            obj.delta_traj(t) = norm(obj.c_hat - obj.p) - obj.d_des;
+         
             
             if obj.localization_heading == zeros(2,1)
                 angles = atan2(varphi_matrix(2, :), varphi_matrix(1, :));
@@ -493,34 +491,9 @@ classdef AgentDiscrete
             end
             obj.p = obj.p + obj.p_dot * dT;
             obj.p_traj(:, t) = obj.p;
+            obj.delta_traj(t) = norm(obj.c - obj.p) - obj.d_des;
         end
 
-        % Moving agent with non-holonomic constraints
-        function obj = moveNonHolonomic(obj, dT, t)
-            
-            h_i = [cos(obj.heading); sin(obj.heading)];
-            h_perp = [-sin(obj.heading); cos(obj.heading)];
-
-            f_i = obj.u;
-            f_perp = f_i - (h_i' * f_i) * h_i;
-            
-            v = h_i' * f_i;
-            heading_dot = h_perp' * f_perp;
-           
-            x_dot = v * cos(obj.heading);
-            y_dot = v * sin(obj.heading);
-            theta_dot = heading_dot;
-            
-            obj.p_dot = [x_dot; y_dot];
-            
-            obj.p(1) = obj.p(1) + x_dot * dT;
-            obj.p(2) = obj.p(2) + y_dot * dT;
-            obj.heading = obj.heading + theta_dot * dT;
-            
-            obj.heading = atan2(sin(obj.heading), cos(obj.heading));
-            
-            obj.p_traj(:, t) = obj.p;
-        end
         
     end
 end

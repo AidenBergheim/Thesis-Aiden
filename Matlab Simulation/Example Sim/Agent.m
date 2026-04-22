@@ -148,7 +148,7 @@ classdef Agent
             % Computing desired agent-to-centroid distance
             obj.d_des = obj.d_des_func(current_time, theta, x_hat_positions, obj.c_hat, obj.p);
             obj.d_des_traj(t) = obj.d_des;
-            obj.d_des_dot(t) = 0;   % Derivative is zero for circular case
+            obj.d_des_dot(t) = 0;
         end
 
         % Getting bearing measurement to each target

@@ -62,9 +62,9 @@ clc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for t = 1:tSteps
-    AgentPDT = AgentPDT.updateDesiredDistance(t, dT);
     AgentPDT = AgentPDT.getBearings(t, Targets);                    % --- Take bearing measurements
     AgentPDT = AgentPDT.estimateTargetPDT(t, dT, Targets, Tc1);          % --- Run estimator
+    AgentPDT = AgentPDT.updateDesiredDistance(t, dT);
     AgentPDT = AgentPDT.controlInputPDT(t, Tc1, Tc2, dT);                % --- Run control law
     AgentPDT = AgentPDT.move(dT, t);                                % --- Execute control law
 
