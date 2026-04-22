@@ -1,1 +1,0 @@
-$$\boldsymbol{\psi}(t) = \frac{\boldsymbol{c} - \boldsymbol{y}(t)}{\|\boldsymbol{c} - \boldsymbol{y}(t)\|} := \frac{\boldsymbol{c} - \boldsymbol{y}(t)}{d(t)}$$

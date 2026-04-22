@@ -1,1 +1,0 @@
-We assume that all targets are stationary, that is, $\forall i \in \mathcal{I}$,  $\dot{x}_i(t)=\mathbf{0}_2$ for all $t \geq 0$.

@@ -1,1 +1,0 @@
-$$\boldsymbol{\varphi}_i(t) = \frac{\boldsymbol{x}_i - \boldsymbol{y}(t)}{\|\boldsymbol{x}_i - \boldsymbol{y}(t)\|}$$
