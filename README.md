@@ -9,8 +9,8 @@ simultaneously localize and circumnavigate multiple unknown stationary targets u
 The contents of the repository are summarised as follows:
 
 1. _Experimental Files_: files relating to the experimental validation of the proposed algorithms for a holonomic agent, performed using a Crazyflie 2.1 drone.
-    - _Python Algorithm Adaptation_: Contains the python adaptation of the proposed algorithms for a holonomic agent used for experimental testing, based of those produced by Donglin Sui (https://github.com/Gloogger)
-    - _Results_: Contains the .csv files from experimental testing as well as MATLAB scripts to plot this data
+    - _Python Algorithm Adaptation_: Contains the python adaptation of the proposed algorithms for a holonomic agent used for experimental testing, based of those produced by Donglin Sui (https://github.com/Gloogger).
+    - _Results_: Contains the .csv files from experimental testing as well as MATLAB scripts to plot this data.
 2. Simulation Files: files used to perform simulation of algorithms proposed for each holonomic and non-holomic agent models.
     - _MATLAB Code_: Contains simulation scripts using Euler integration of the proposed algorithms and those of other researchers.
     - _Results_: Contains the results of executing the MATLAB code in .fig and .svg formats.
