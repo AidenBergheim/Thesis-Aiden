@@ -15,6 +15,12 @@ The contents of the repository are summarised as follows:
     - _MATLAB Code_: Contains simulation scripts using Euler integration of the proposed algorithms and those of other researchers.
     - _Results_: Contains the results of executing the MATLAB code in .fig and .svg formats.
 
+**Simulations**
+
+Each simulation result presented in the thesis paper has an associated file to run it. For example, the simulation of the proposed algorithms for a holonomic agent
+when noise is applied to bearing measurements is titled 'Holonomic_Noise.m'. Running this file runs the relevant simulation, and plots are automatically produced upon
+completion. Agent files are created for each set of proposed algorithms, for example for the proposed algorithms for a non-holonomic agent, the agent is called 'Agent_Nonholonomic.m'. These agent files contain the relevant algorithms and are called by the relevant main files.
+
 **Videos**
 
-In addition to the provided files, videos of the experimental validation performed can be found at: https://drive.google.com/drive/folders/1Ub0Wb97BTyFVtbwuX7Sc5nAbCrVoyXc6?usp=drive_link
+In addition to the provided files, videos of the experimental validation performed can be found at: https://drive.google.com/drive/folders/1Ub0Wb97BTyFVtbwuX7Sc5nAbCrVoyXc6?usp=drive_link.
